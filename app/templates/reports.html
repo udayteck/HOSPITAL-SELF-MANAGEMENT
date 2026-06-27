@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reports</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Summary</h5>
+                <p>Total appointments: {{ total }}</p>
+                <p>Completed: {{ completed }}</p>
+                <p>Cancelled: {{ cancelled }}</p>
+                <p>No‑show rate: {{ "%.2f"|format(noshow_rate) }}%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Appointments per Doctor</h5>
+                <ul>
+                {% for doctor_name, count in doctor_stats %}
+                    <li>{{ doctor_name }}: {{ count }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

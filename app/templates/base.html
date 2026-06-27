@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}SKD Hospital System{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ===== VITAL SIGNS + MEDICAL ICONS BACKGROUND ===== */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #080c18;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Dark grid overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 200, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 200, 0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* Glow gradient */
+        .glow-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 200, 180, 0.20) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 200, 180, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 40% 80%, rgba(0, 200, 180, 0.15) 0%, transparent 50%);
+            animation: glowPulse 10s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes glowPulse {
+            0% { opacity: 0.6; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* ECG Canvas */
+        #ecgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Floating vital signs */
+        .vital-sign {
+            position: fixed;
+            font-family: 'Inter', monospace;
+            color: rgba(0, 255, 200, 0.30);
+            pointer-events: none;
+            z-index: 2;
+            font-weight: 300;
+            letter-spacing: 1px;
+            animation: floatVital 22s infinite ease-in-out;
+            text-shadow: 0 0 20px rgba(0, 255, 200, 0.12);
+        }
+        .vital-sign .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.5;
+        }
+        .vital-sign .value {
+            font-size: 2.2rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        .vital-sign .unit {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            margin-left: 2px;
+        }
+        .vital-sign:nth-child(1) { top: 12%; left: 6%; animation-delay: 0s; }
+        .vital-sign:nth-child(2) { top: 28%; right: 8%; animation-delay: -5s; }
+        .vital-sign:nth-child(3) { bottom: 22%; left: 10%; animation-delay: -10s; }
+        .vital-sign:nth-child(4) { bottom: 35%; right: 6%; animation-delay: -15s; }
+        .vital-sign:nth-child(5) { top: 50%; left: 4%; animation-delay: -3s; }
+        .vital-sign:nth-child(6) { top: 8%; right: 22%; animation-delay: -7s; }
+
+        @keyframes floatVital {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            25% { transform: translate(-20px, -30px) scale(1.02); opacity: 0.4; }
+            50% { transform: translate(25px, 20px) scale(0.98); opacity: 0.25; }
+            75% { transform: translate(-15px, 35px) scale(1.01); opacity: 0.35; }
+            100% { transform: translate(10px, -20px) scale(1); opacity: 0.2; }
+        }
+
+        /* Floating medical icons */
+        .floating-icon {
+            position: fixed;
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            z-index: 2;
+            animation: floatIcon 24s infinite ease-in-out;
+            text-shadow: 0 0 25px rgba(0, 200, 180, 0.15);
+            opacity: 0.7;
+        }
+        .floating-icon:nth-child(7) { top: 15%; left: 5%; animation-delay: 0s; font-size: 4.2rem; }
+        .floating-icon:nth-child(8) { top: 70%; left: 88%; animation-delay: -4s; font-size: 4.8rem; }
+        .floating-icon:nth-child(9) { top: 40%; left: 92%; animation-delay: -8s; font-size: 3.6rem; }
+        .floating-icon:nth-child(10) { top: 85%; left: 12%; animation-delay: -12s; font-size: 4.0rem; }
+        .floating-icon:nth-child(11) { top: 25%; left: 65%; animation-delay: -16s; font-size: 3.2rem; }
+        .floating-icon:nth-child(12) { top: 55%; left: 25%; animation-delay: -20s; font-size: 4.5rem; }
+        .floating-icon:nth-child(13) { top: 10%; left: 82%; animation-delay: -2s; font-size: 3.4rem; }
+        .floating-icon:nth-child(14) { top: 48%; left: 10%; animation-delay: -6s; font-size: 3.0rem; }
+        .floating-icon:nth-child(15) { top: 90%; left: 55%; animation-delay: -10s; font-size: 3.8rem; }
+        .floating-icon:nth-child(16) { top: 6%; left: 40%; animation-delay: -14s; font-size: 2.8rem; }
+        .floating-icon:nth-child(17) { top: 62%; left: 78%; animation-delay: -18s; font-size: 3.3rem; }
+        .floating-icon:nth-child(18) { top: 30%; left: 35%; animation-delay: -22s; font-size: 2.6rem; }
+
+        @keyframes floatIcon {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            25% { transform: translate(40px, -35px) rotate(12deg) scale(1.05); }
+            50% { transform: translate(-30px, 40px) rotate(-6deg) scale(0.95); }
+            75% { transform: translate(50px, 20px) rotate(18deg) scale(1.02); }
+            100% { transform: translate(-20px, -40px) rotate(-10deg) scale(1); }
+        }
+        .glow-icon {
+            filter: drop-shadow(0 0 18px rgba(0, 200, 180, 0.2));
+        }
+
+        /* Content wrapper */
+        .page-wrapper {
+            position: relative;
+            z-index: 3;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main { flex: 1; }
+
+        /* Glassmorphism navbar & footer */
+        .glass-nav {
+            background: rgba(8, 12, 24, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(0, 255, 200, 0.08);
+        }
+        .glass-footer {
+            background: rgba(8, 12, 24, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 255, 200, 0.05);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #080c18; }
+        ::-webkit-scrollbar-thumb { background: #00ccb0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00b399; }
+        .transition-smooth { transition: all 0.3s ease; }
+
+        .text-light { color: rgba(255, 255, 255, 0.9); }
+        .text-muted-light { color: rgba(255, 255, 255, 0.6); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(0, 255, 200, 0.06);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Background layers -->
+    <div class="grid-overlay"></div>
+    <div class="glow-gradient"></div>
+    <canvas id="ecgCanvas"></canvas>
+
+    <!-- Floating vital signs -->
+    <div class="vital-sign">
+        <div class="label">Heart Rate</div>
+        <div class="value">72</div>
+        <span class="unit">BPM</span>
+    </div>
+    <div class="vital-sign">
+        <div class="label">Blood Pressure</div>
+        <div class="value">120/80</div>
+        <span class="unit">mmHg</span>
+    </div>
+    <div class="vital-sign">
+        <div class="label">SpO₂</div>
+        <div class="value">98</div>
+        <span class="unit">%</span>
+    </div>
+    <div class="vital-sign">
+        <div class="label">Respiration</div>
+        <div class="value">16</div>
+        <span class="unit">RPM</span>
+    </div>
+    <div class="vital-sign">
+        <div class="label">Temperature</div>
+        <div class="value">36.5</div>
+        <span class="unit">°C</span>
+    </div>
+    <div class="vital-sign">
+        <div class="label">ECG Lead</div>
+        <div class="value">II</div>
+        <span class="unit"></span>
+    </div>
+
+    <!-- Floating medical icons (glowing) -->
+    <div class="floating-icon glow-icon"><i class="fas fa-plus-circle"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-stethoscope"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-user-md"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-hospital"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-ambulance"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-hand-holding-heart"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-syringe"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-microscope"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-x-ray"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-pills"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-thermometer-half"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-lungs"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-brain"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-bone"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-tooth"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-eye"></i></div>
+    <div class="floating-icon glow-icon"><i class="fas fa-ear-listen"></i></div>
+
+    <div class="page-wrapper">
+        <!-- Navbar -->
+        <nav class="glass-nav sticky top-0 z-50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SKD Hospital" class="h-10 w-auto">
+                            <span class="font-bold text-xl text-white">SKD<span class="text-teal-400">Hospital</span></span>
+                        </a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        {% if current_user.is_authenticated %}
+                            <div class="relative group">
+                                <button class="flex items-center space-x-1 text-white/80 hover:text-white focus:outline-none">
+                                    <i class="fas fa-user-circle text-xl"></i>
+                                    <span>{{ current_user.email.split('@')[0] }}</span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                <div class="absolute right-0 w-48 bg-white/10 backdrop-blur-md rounded-md shadow-lg py-1 mt-2 hidden group-hover:block transition-smooth z-10 border border-white/10">
+                                    {% if current_user.role == 'patient' %}
+                                        <a href="{{ url_for('patient.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2"></i> Dashboard</a>
+                                    {% elif current_user.role == 'doctor' %}
+                                        <a href="{{ url_for('doctor.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2"></i> Dashboard</a>
+                                    {% elif current_user.role == 'receptionist' %}
+                                        <a href="{{ url_for('receptionist.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2"></i> Dashboard</a>
+                                    {% elif current_user.role == 'admin' %}
+                                        <a href="{{ url_for('admin.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2"></i> Dashboard</a>
+                                    {% endif %}
+                                    <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="text-white/80 hover:text-white font-medium">Login</a>
+                            <a href="{{ url_for('auth.register') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md font-medium transition-smooth">Register</a>
+                        {% endif %}
+                    </div>
+                    <div class="md:hidden">
+                        <button id="mobile-menu-button" class="text-white/80 hover:text-white focus:outline-none">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden bg-black/40 backdrop-blur-md border-t border-white/10">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'patient' %}
+                            <a href="{{ url_for('patient.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Dashboard</a>
+                        {% elif current_user.role == 'doctor' %}
+                            <a href="{{ url_for('doctor.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Dashboard</a>
+                        {% elif current_user.role == 'receptionist' %}
+                            <a href="{{ url_for('receptionist.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Dashboard</a>
+                        {% elif current_user.role == 'admin' %}
+                            <a href="{{ url_for('admin.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Dashboard</a>
+                        {% endif %}
+                        <a href="{{ url_for('auth.logout') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white/10">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="block px-3 py-2 rounded-md text-base font-medium text-teal-300 hover:bg-white/10">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+
+        <!-- Flash Messages -->
+        <div class="container mx-auto px-4 mt-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="p-4 rounded-md mb-4 backdrop-blur-sm {% if category == 'success' %}bg-green-500/20 text-green-200 border-l-4 border-green-400{% elif category == 'danger' %}bg-red-500/20 text-red-200 border-l-4 border-red-400{% else %}bg-blue-500/20 text-blue-200 border-l-4 border-blue-400{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                <span>{{ message }}</span>
+                                <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-white/60 hover:text-white"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-footer text-white mt-12 py-8">
+            <div class="container mx-auto px-4 text-center">
+                <p>&copy; 2026 SKD Hospital. Advancing Healthcare, Compassionately.</p>
+                <p class="text-white/50 text-sm mt-2">Your health, our mission.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ===== Enhanced ECG with sharp edges, positioned at the top =====
+        (function() {
+            const canvas = document.getElementById('ecgCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let time = 0;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Realistic ECG with sharp transitions (digital monitor style)
+            function getECGValue(x, t) {
+                // x: 0..1 (fraction of screen width), t: time offset
+                const phase = (x + t) % 1;
+                let value = 0;
+
+                // Sharp transitions using step-like functions
+
+                // P wave (small bump)
+                if (phase < 0.06) {
+                    const p = phase / 0.06;
+                    value = 0.20 * Math.sin(p * Math.PI);
+                }
+                // Q wave (sharp dip)
+                else if (phase < 0.08) {
+                    const p = (phase - 0.06) / 0.02;
+                    value = -0.35 * Math.sin(p * Math.PI);
+                }
+                // R wave – very sharp spike (almost square)
+                else if (phase < 0.12) {
+                    const p = (phase - 0.08) / 0.04;
+                    // Use a clipped sine to create a sharp peak
+                    if (p < 0.5) {
+                        value = 0.95 * (p / 0.5); // linear rise to peak
+                    } else {
+                        value = 0.95 * (1 - (p - 0.5) / 0.5); // linear fall
+                    }
+                }
+                // S wave (sharp dip)
+                else if (phase < 0.16) {
+                    const p = (phase - 0.12) / 0.04;
+                    if (p < 0.5) {
+                        value = -0.55 * (p / 0.5);
+                    } else {
+                        value = -0.55 * (1 - (p - 0.5) / 0.5);
+                    }
+                }
+                // T wave (broader bump, but still with relatively sharp edges)
+                else if (phase < 0.30) {
+                    const p = (phase - 0.16) / 0.14;
+                    // Use a clipped sine to make it more square-ish
+                    if (p < 0.2) {
+                        value = 0.35 * (p / 0.2);
+                    } else if (p < 0.8) {
+                        value = 0.35;
+                    } else {
+                        value = 0.35 * (1 - (p - 0.8) / 0.2);
+                    }
+                }
+                // U wave (tiny bump)
+                else if (phase < 0.36) {
+                    const p = (phase - 0.30) / 0.06;
+                    value = 0.08 * Math.sin(p * Math.PI);
+                }
+                // Baseline
+                else {
+                    value = 0;
+                }
+                return value;
+            }
+
+            function animate() {
+                time += 0.0018;
+                ctx.clearRect(0, 0, width, height);
+
+                // Position at the top: baseline at 18% of height
+                const centerY = height * 0.18;
+                const amplitude = height * 0.12; // amplitude small to keep near top
+
+                // Main ECG line
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(0, 255, 200, 0.50)';
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = 'rgba(0, 255, 200, 0.35)';
+                ctx.shadowBlur = 15;
+
+                for (let x = 0; x < width; x += 0.5) {
+                    const progress = x / width;
+                    const value = getECGValue(progress, time);
+                    const y = centerY - value * amplitude;
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Glow layer
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(0, 255, 200, 0.08)';
+                ctx.lineWidth = 14;
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(0, 255, 200, 0.15)';
+                for (let x = 0; x < width; x += 0.5) {
+                    const progress = x / width;
+                    const value = getECGValue(progress, time);
+                    const y = centerY - value * amplitude;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

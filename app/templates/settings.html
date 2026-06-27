@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Global Settings</h2>
+<form method="POST">
+    <div class="mb-3">
+        <label>Cancellation window (hours before appointment)</label>
+        <input type="number" name="cancellation_hours" class="form-control" value="{{ cancellation_hours }}" required>
+    </div>
+    <div class="mb-3">
+        <label>Slot duration (minutes)</label>
+        <input type="number" name="slot_duration_minutes" class="form-control" value="{{ slot_duration }}" required>
+    </div>
+    <div class="mb-3">
+        <label>Appointment lead days (max days in advance)</label>
+        <input type="number" name="appointment_lead_days" class="form-control" value="{{ lead_days }}" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+</form>
+{% endblock %}

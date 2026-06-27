@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Patient Insurance - SKD Hospital{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-6 border border-white/10">
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <h1 class="text-2xl font-bold text-white">🛡️ Insurance – {{ patient.full_name }}</h1>
+        <a href="{{ url_for('admin.edit_patient_insurance', patient_id=patient.id) }}" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition shadow-md">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+    </div>
+    {% if insurance %}
+        <div class="space-y-3 text-white/90">
+            <p><strong class="text-white/70">Provider:</strong> {{ insurance.provider_name }}</p>
+            <p><strong class="text-white/70">Policy Number:</strong> {{ insurance.policy_number }}</p>
+            {% if insurance.group_number %}<p><strong class="text-white/70">Group Number:</strong> {{ insurance.group_number }}</p>{% endif %}
+            <p><strong class="text-white/70">Coverage:</strong> {{ insurance.coverage_details or 'N/A' }}</p>
+            {% if insurance.expiration_date %}<p><strong class="text-white/70">Expires:</strong> {{ insurance.expiration_date.strftime('%Y-%m-%d') }}</p>{% endif %}
+            <p><strong class="text-white/70">Primary Holder:</strong> {{ insurance.primary_holder_name or 'N/A' }}</p>
+            <p><strong class="text-white/70">Relationship:</strong> {{ insurance.relationship or 'N/A' }}</p>
+            <p><strong class="text-white/70">Status:</strong> 
+                <span class="px-2 py-1 text-xs rounded-full {% if insurance.is_active %}bg-green-500/30 text-green-200{% else %}bg-red-500/30 text-red-200{% endif %}">
+                    {{ 'Active' if insurance.is_active else 'Inactive' }}
+                </span>
+            </p>
+        </div>
+    {% else %}
+        <div class="bg-white/5 rounded-lg p-6 text-center text-white/70">
+            <i class="fas fa-shield-alt text-4xl mb-3"></i>
+            <p>No insurance information on file for this patient.</p>
+            <a href="{{ url_for('admin.edit_patient_insurance', patient_id=patient.id) }}" class="inline-block mt-3 text-teal-400 hover:underline">Add insurance details</a>
+        </div>
+    {% endif %}
+    <div class="mt-6">
+        <a href="{{ url_for('admin.manage_patients') }}" class="text-white/70 hover:text-white transition">← Back to Patients</a>
+    </div>
+</div>
+{% endblock %}

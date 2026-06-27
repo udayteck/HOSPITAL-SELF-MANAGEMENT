@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - SKD Hospital{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4">{{ title }}</h2>
+    <form method="POST">
+        <div class="space-y-4">
+            <div>
+                <label class="block font-medium">Patient</label>
+                <select name="patient_id" class="w-full border rounded px-3 py-2" required>
+                    <option value="">Select patient</option>
+                    {% for patient in patients %}
+                    <option value="{{ patient.id }}">{{ patient.full_name }} ({{ patient.user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block font-medium">Appointment (optional)</label>
+                <select name="appointment_id" class="w-full border rounded px-3 py-2">
+                    <option value="">Not linked</option>
+                    {% for apt in appointments %}
+                    <option value="{{ apt.id }}">Dr. {{ apt.doctor.full_name }} on {{ apt.availability.slot_start.strftime('%d/%m/%Y %H:%M') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block font-medium">Amount (₹)</label>
+                <input type="number" step="0.01" name="amount" class="w-full border rounded px-3 py-2" required>
+            </div>
+            <div>
+                <label class="block font-medium">Items/Services</label>
+                <textarea name="items" rows="3" class="w-full border rounded px-3 py-2" placeholder="e.g., Consultation - ₹500, Blood Test - ₹300" required></textarea>
+            </div>
+            <div>
+                <label class="block font-medium">Status</label>
+                <select name="status" class="w-full border rounded px-3 py-2">
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Overdue">Overdue</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded">Generate Bill</button>
+            <a href="{{ url_for('admin.manage_bills') if current_user.role == 'admin' else url_for('receptionist.manage_bills') }}" class="bg-gray-300 px-4 py-2 rounded">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

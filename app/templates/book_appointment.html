@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment with Dr. {{ doctor.full_name }} - SKD Hospital{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+    <!-- Doctor Profile Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <i class="fas fa-user-md text-teal-600 text-3xl"></i>
+                </div>
+                <div class="text-white">
+                    <h2 class="text-2xl font-bold">{{ doctor.full_name }}</h2>
+                    <p class="text-teal-100"><i class="fas fa-stethoscope mr-1"></i> {{ doctor.specialty }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600">
+                <div><i class="fas fa-envelope text-teal-500 w-5"></i> {{ doctor.user.email }}</div>
+                <div><i class="fas fa-phone-alt text-teal-500 w-5"></i> {{ doctor.phone or 'Not available' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4 border-l-4 border-teal-600 pl-3">Select Appointment Date & Time</h3>
+        
+        <!-- Date Picker -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar-alt text-teal-500 mr-1"></i> Choose a date
+            </label>
+            <input type="date" id="appointmentDate" 
+                   class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                   min="{{ today }}" max="{{ max_date }}">
+        </div>
+
+        <!-- Available Slots -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-clock text-teal-500 mr-1"></i> Available time slots
+            </label>
+            <div id="slotsList" class="flex flex-wrap gap-3 min-h-[100px]">
+                <div class="text-gray-400 italic">Select a date to see available slots</div>
+            </div>
+        </div>
+
+        <!-- NEW: Reason for visit -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-notes-medical text-teal-500 mr-1"></i> Reason for visit (optional)
+            </label>
+            <textarea id="reasonVisit" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Briefly describe your symptoms or reason for consultation..."></textarea>
+        </div>
+
+        <input type="hidden" id="selectedSlotId">
+
+        <!-- Book Button -->
+        <button id="bookBtn" disabled
+                class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <i class="fas fa-calendar-check"></i> Confirm Booking
+        </button>
+    </div>
+</div>
+
+<script>
+    const doctorId = {{ doctor.id }};
+    const dateInput = document.getElementById('appointmentDate');
+    const slotsList = document.getElementById('slotsList');
+    const selectedSlotIdInput = document.getElementById('selectedSlotId');
+    const bookBtn = document.getElementById('bookBtn');
+    const reasonTextarea = document.getElementById('reasonVisit');
+
+    let selectedSlotId = null;
+
+    dateInput.addEventListener('change', async function() {
+        const date = this.value;
+        if (!date) return;
+        slotsList.innerHTML = '<div class="text-gray-500"><i class="fas fa-spinner fa-spin"></i> Loading slots...</div>';
+        selectedSlotId = null;
+        selectedSlotIdInput.value = '';
+        bookBtn.disabled = true;
+        try {
+            const response = await fetch(`/api/available_slots/${doctorId}?date=${date}`);
+            const slots = await response.json();
+            if (!response.ok) throw new Error(slots.error || 'Failed to fetch');
+            if (slots.length === 0) {
+                slotsList.innerHTML = '<div class="text-gray-400 italic">No available slots on this date</div>';
+                return;
+            }
+            slotsList.innerHTML = '';
+            slots.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'px-4 py-2 border border-teal-300 text-teal-700 rounded-lg hover:bg-teal-600 hover:text-white transition-smooth focus:outline-none focus:ring-2 focus:ring-teal-500';
+                btn.textContent = `${slot.start} - ${slot.end}`;
+                btn.dataset.id = slot.id;
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#slotsList button').forEach(b => {
+                        b.classList.remove('bg-teal-600', 'text-white');
+                        b.classList.add('border-teal-300', 'text-teal-700');
+                    });
+                    btn.classList.remove('border-teal-300', 'text-teal-700');
+                    btn.classList.add('bg-teal-600', 'text-white');
+                    selectedSlotId = slot.id;
+                    selectedSlotIdInput.value = slot.id;
+                    bookBtn.disabled = false;
+                });
+                slotsList.appendChild(btn);
+            });
+        } catch (error) {
+            slotsList.innerHTML = `<div class="text-red-500">Error loading slots: ${error.message}</div>`;
+        }
+    });
+
+    bookBtn.addEventListener('click', async function() {
+        if (!selectedSlotId) {
+            alert('Please select a time slot');
+            return;
+        }
+        const reason = reasonTextarea.value.trim();
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
+        try {
+            const response = await fetch('/api/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slot_id: selectedSlotId, reason: reason })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(`✅ Appointment request sent to doctor for confirmation. ID: ${data.appointment_id}`);
+                window.location.href = "{{ url_for('patient.dashboard') }}";
+            } else {
+                alert(`❌ Booking failed: ${data.error}`);
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirm Booking';
+            }
+        } catch (error) {
+            alert('Network error. Please try again.');
+            bookBtn.disabled = false;
+            bookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Confirm Booking';
+        }
+    });
+</script>
+
+<div class="mt-6 text-center text-sm text-gray-500">
+    <i class="fas fa-info-circle"></i> Slots are 30‑minute intervals (configurable by admin).
+</div>
+
+{% endblock %}

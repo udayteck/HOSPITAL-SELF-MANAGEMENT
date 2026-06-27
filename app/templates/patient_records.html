@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Patient Records - SKD Hospital{% endblock %}
+{% block content %}
+
+<div class="bg-white rounded-xl shadow-md p-6 mb-6">
+    <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-blue-600 text-3xl"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ patient.full_name }}</h1>
+            <div class="text-gray-500 text-sm">
+                <span><i class="fas fa-envelope mr-1"></i> {{ patient.user.email }}</span>
+                <span class="ml-4"><i class="fas fa-phone mr-1"></i> {{ patient.phone or '—' }}</span>
+                <span class="ml-4"><i class="fas fa-calendar-alt mr-1"></i> DOB: {{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '—' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b">
+        <h2 class="text-xl font-semibold text-gray-800">📋 Appointment History</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cancel Reason</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for apt in appointments %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ apt.availability.slot_start.strftime('%d/%m/%Y %I:%M %p') }}</td>
+                    <td class="px-6 py-4">{{ apt.reason_visit or '—' }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if apt.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif apt.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% elif apt.status == 'no_show' %}bg-orange-100 text-orange-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ apt.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">{{ apt.cancel_reason or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No appointments found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-6">
+    <a href="{{ url_for('doctor.dashboard') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded transition">← Back to Dashboard</a>
+</div>
+
+{% endblock %}

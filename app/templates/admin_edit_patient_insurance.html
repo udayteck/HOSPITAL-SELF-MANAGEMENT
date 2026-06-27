@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if insurance else 'Add' }} Insurance - SKD Hospital{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-6 border border-white/10">
+    <h2 class="text-2xl font-bold text-white mb-4">{{ 'Edit' if insurance else 'Add' }} Insurance for {{ patient.full_name }}</h2>
+    <form method="POST">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Provider Name *</label>
+                <input type="text" name="provider_name" value="{{ insurance.provider_name if insurance else '' }}" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Policy Number *</label>
+                <input type="text" name="policy_number" value="{{ insurance.policy_number if insurance else '' }}" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Group Number</label>
+                <input type="text" name="group_number" value="{{ insurance.group_number if insurance else '' }}" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Coverage Details</label>
+                <textarea name="coverage_details" rows="3" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400">{{ insurance.coverage_details if insurance else '' }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Expiration Date</label>
+                <input type="date" name="expiration_date" value="{{ insurance.expiration_date.strftime('%Y-%m-%d') if insurance and insurance.expiration_date else '' }}" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-teal-400">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Primary Holder Name</label>
+                <input type="text" name="primary_holder_name" value="{{ insurance.primary_holder_name if insurance else '' }}" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white/80 mb-1">Relationship</label>
+                <select name="relationship" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-teal-400">
+                    <option value="">Select</option>
+                    <option value="Self" {% if insurance and insurance.relationship == 'Self' %}selected{% endif %}>Self</option>
+                    <option value="Spouse" {% if insurance and insurance.relationship == 'Spouse' %}selected{% endif %}>Spouse</option>
+                    <option value="Child" {% if insurance and insurance.relationship == 'Child' %}selected{% endif %}>Child</option>
+                    <option value="Other" {% if insurance and insurance.relationship == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="is_active" {% if insurance and insurance.is_active %}checked{% endif %} class="rounded border-white/20 bg-white/20 text-teal-500 focus:ring-teal-400">
+                    <span class="ml-2 text-white/80">Active</span>
+                </label>
+            </div>
+        </div>
+        <div class="mt-6 flex flex-wrap gap-3">
+            <button type="submit" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition shadow-md">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <a href="{{ url_for('admin.view_patient_insurance', patient_id=patient.id) }}" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition border border-white/10">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

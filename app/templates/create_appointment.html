@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Create Appointment - Receptionist{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4">Create New Appointment</h2>
+    <form method="POST" id="createAppointmentForm">
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Patient Email</label>
+            <input type="email" name="patient_email" class="w-full border rounded px-3 py-2 mt-1" required>
+        </div>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Doctor</label>
+            <select name="doctor_id" id="doctor_id" class="w-full border rounded px-3 py-2 mt-1" required>
+                <option value="">Select doctor</option>
+                {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">{{ doctor.full_name }} ({{ doctor.specialty }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Date</label>
+            <input type="date" id="date" name="date" class="w-full border rounded px-3 py-2 mt-1" required>
+        </div>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Available Slots</label>
+            <select name="slot_id" id="slot_id" class="w-full border rounded px-3 py-2 mt-1" required>
+                <option value="">Select a date first</option>
+            </select>
+        </div>
+        <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">Create Appointment</button>
+    </form>
+</div>
+
+<script>
+    const doctorSelect = document.getElementById('doctor_id');
+    const dateInput = document.getElementById('date');
+    const slotSelect = document.getElementById('slot_id');
+    
+    async function loadSlots() {
+        const doctorId = doctorSelect.value;
+        const date = dateInput.value;
+        if (!doctorId || !date) {
+            slotSelect.innerHTML = '<option value="">Select doctor and date first</option>';
+            return;
+        }
+        slotSelect.innerHTML = '<option value="">Loading slots...</option>';
+        try {
+            const response = await fetch(`/receptionist/get_slots/${doctorId}/${date}`);
+            if (!response.ok) throw new Error('Failed to load slots');
+            const slots = await response.json();
+            if (slots.length === 0) {
+                slotSelect.innerHTML = '<option value="">No available slots on this date</option>';
+            } else {
+                slotSelect.innerHTML = '<option value="">Select a slot</option>';
+                slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot.id;
+                    option.textContent = `${slot.start} - ${slot.end}`;
+                    slotSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            slotSelect.innerHTML = '<option value="">Error loading slots</option>';
+            console.error(error);
+        }
+    }
+    
+    doctorSelect.addEventListener('change', loadSlots);
+    dateInput.addEventListener('change', loadSlots);
+</script>
+{% endblock %}

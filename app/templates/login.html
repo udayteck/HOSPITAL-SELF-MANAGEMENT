@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | SKD Hospital</title>
+  <style>
+    /* ===== VARIABLES ===== */
+    :root {
+      --bg: #f3f9fb;
+      --card: #ffffff;
+      --teal: #2aa8b8;
+      --teal-light: #58c7d4;
+      --teal-deep: #167f90;
+      --navy: #24345f;
+      --text: #ffffff;
+      --dark-text: #273556;
+      --muted: #6f7b8e;
+      --error: #ff6f91;
+      --ease: cubic-bezier(0.77, 0, 0.18, 1);
+    }
+
+    /* ===== RESET & BASE ===== */
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--dark-text);
+      background:
+        radial-gradient(circle at 22% 18%, rgba(88,199,212,0.2), transparent 32%),
+        radial-gradient(circle at 82% 78%, rgba(217,246,228,0.42), transparent 30%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .main-container {
+      position: relative;
+      width: min(100%, 760px);
+      height: 450px;
+      border: 2px solid var(--teal);
+      background: var(--card);
+      box-shadow: 0 0 14px rgba(42,168,184,0.58), 0 0 38px rgba(88,199,212,0.32), 0 18px 60px rgba(36,52,95,0.12);
+      overflow: hidden;
+      animation: containerIntro 0.45s ease both;
+    }
+
+    /* ===== BACKGROUND ANIMATIONS ===== */
+    .bg-animate {
+      position: absolute;
+      top: -4px;
+      right: 0;
+      width: 850px;
+      height: 600px;
+      background: linear-gradient(45deg, #eefbfc, var(--teal), var(--teal-light));
+      border-bottom: 3px solid var(--teal);
+      transform: rotate(10deg) skewY(40deg);
+      transform-origin: bottom right;
+      animation: introBgOne 1.05s 0.15s var(--ease) backwards;
+      pointer-events: none;
+    }
+    .bg-animate-two {
+      position: absolute;
+      top: 100%;
+      left: 250px;
+      width: 850px;
+      height: 700px;
+      background: var(--card);
+      border-top: 3px solid var(--teal);
+      transform: rotate(0) skewY(0);
+      transform-origin: bottom left;
+      animation: introBgTwo 1.05s 0.15s var(--ease) backwards;
+      pointer-events: none;
+    }
+
+    /* ===== LOGIN FORM ===== */
+    .form-box {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 2;
+      padding: 0 40px;
+    }
+    .form-box.login { left: 0; }
+    .form-box h2 {
+      margin: 0 0 16px;
+      font-size: 1.8rem;
+      text-align: center;
+      color: var(--navy);
+    }
+
+    /* ===== INPUT FIELDS ===== */
+    .input-box {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 44px;
+      margin: 14px 0 10px;
+    }
+    .input-box input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-bottom: 2px solid rgba(36,52,95,0.58);
+      outline: 0;
+      padding: 18px 30px 0 0;
+      color: var(--dark-text);
+      font-weight: 500;
+      background: transparent;
+      transition: 240ms ease;
+    }
+    .input-box span {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      color: var(--muted);
+      font-size: 0.94rem;
+      transform: translateY(-50%);
+      transition: 240ms ease;
+    }
+    .input-box input:focus ~ span,
+    .input-box input:valid ~ span {
+      top: -5px;
+      color: var(--teal-deep);
+    }
+    .input-box.invalid input { border-bottom-color: var(--error); }
+    .input-box small {
+      position: absolute;
+      left: 0;
+      bottom: -15px;
+      min-height: 12px;
+      color: var(--error);
+      font-size: 0.68rem;
+    }
+    .field-icon {
+      position: absolute;
+      right: 2px;
+      top: 24px;
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: var(--teal-deep);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.78;
+      transition: opacity 220ms ease, stroke 220ms ease, transform 220ms ease;
+    }
+    .input-box input:focus ~ .field-icon,
+    .input-box input:valid ~ .field-icon {
+      opacity: 1;
+      stroke: var(--teal);
+      transform: translateY(-1px);
+    }
+
+    /* ===== BUTTON ===== */
+    .btn {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 42px;
+      margin: 12px 0 8px;
+      border-radius: 999px;
+      color: var(--text);
+      font-weight: 700;
+      background: linear-gradient(180deg, var(--teal-light) 0%, var(--teal) 54%, var(--teal-deep) 100%);
+      box-shadow: 0 0 14px rgba(42,168,184,0.48), inset 0 1px 0 rgba(255,255,255,0.42);
+      cursor: pointer;
+      transition: 220ms ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 0 22px rgba(42,168,184,0.62), inset 0 1px 0 rgba(255,255,255,0.42); }
+    .btn.loading {
+      color: transparent;
+      pointer-events: none;
+    }
+    .btn.loading::after {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.32);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 700ms linear infinite;
+    }
+
+    /* ===== LINKS ===== */
+    .loginreg-link {
+      margin: 0;
+      color: #426c9c;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .loginreg-link a {
+      color: var(--teal-deep);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .loginreg-link a:hover { text-decoration: underline; }
+
+    /* ===== INFO TEXT ===== */
+    .info-text {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 2;
+      padding: 0 42px 60px 92px;
+      text-align: right;
+    }
+    .info-text h2 {
+      margin: 0 0 10px;
+      color: var(--text);
+      font-size: 2.25rem;
+      line-height: 1.15;
+      text-shadow: 0 8px 24px rgba(22,127,144,0.32);
+    }
+    .info-text p {
+      margin: 0;
+      width: fit-content;
+      max-width: 260px;
+      margin-left: auto;
+      color: rgba(255,255,255,0.9);
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    /* ===== KEYFRAMES ===== */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes containerIntro { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+    @keyframes introBgOne { from { transform: rotate(0) skewY(0); } to { transform: rotate(10deg) skewY(40deg); } }
+    @keyframes introBgTwo { from { transform: rotate(-8deg) skewY(-36deg); } to { transform: rotate(0) skewY(0); } }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 720px) {
+      .main-container { width: min(100%,390px); height: 620px; }
+      .bg-animate { top:-120px; right:-210px; width:720px; height:520px; }
+      .bg-animate-two { top:100%; left:-110px; width:720px; }
+      .form-box { width:100%; height:60%; padding:0 28px; left:0; top:190px; }
+      .info-text { width:100%; height:185px; padding:0 34px; text-align:center; right:auto; left:0; }
+      .info-text p { margin:0 auto; }
+      .info-text h2 { font-size:2rem; }
+    }
+    @media (max-width: 360px) {
+      .main-container { height:600px; }
+      .form-box { padding:0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <span class="bg-animate"></span>
+  <span class="bg-animate-two"></span>
+
+  <!-- ===== LOGIN PANEL ===== -->
+  <div class="form-box login">
+    <h2>Login</h2>
+    <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}" novalidate>
+      <label class="input-box">
+        <input type="email" name="email" autocomplete="email" required>
+        <span>Email</span>
+        <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <small></small>
+      </label>
+      <label class="input-box">
+        <input type="password" name="password" autocomplete="current-password" required minlength="6">
+        <span>Password</span>
+        <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+        <small></small>
+      </label>
+      <button class="btn" type="submit">Login</button>
+      <p class="loginreg-link">Don't have an account? <a href="{{ url_for('auth.register') }}">Sign Up</a></p>
+    </form>
+  </div>
+
+  <!-- ===== INFO TEXT ===== -->
+  <div class="info-text">
+    <h2>WELCOME<br>BACK!</h2>
+    <p>Login to continue your secure session.</p>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const form = document.getElementById('loginForm');
+    const setError = (input, message = "") => {
+      const box = input.closest(".input-box");
+      if (!box) return;
+      box.classList.toggle("invalid", Boolean(message));
+      const small = box.querySelector("small");
+      if (small) small.textContent = message;
+    };
+    const validateField = (input) => {
+      let message = "";
+      if (input.validity.valueMissing) message = "Required";
+      else if (input.validity.typeMismatch) message = "Invalid format";
+      else if (input.validity.tooShort) message = "Too short";
+      setError(input, message);
+      return !message;
+    };
+    form.addEventListener("submit", (e) => {
+      let valid = true;
+      form.querySelectorAll("input").forEach(inp => {
+        if (!validateField(inp)) valid = false;
+      });
+      if (!valid) e.preventDefault();
+      else {
+        const btn = form.querySelector(".btn");
+        btn.classList.add("loading");
+      }
+    });
+    form.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => setError(inp));
+    });
+  })();
+</script>
+
+</body>
+</html>

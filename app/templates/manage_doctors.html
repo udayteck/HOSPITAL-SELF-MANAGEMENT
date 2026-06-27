@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Manage Doctors - SKD Hospital{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">👨‍⚕️ Manage Doctors</h1>
+    <a href="{{ url_for('admin.add_doctor') }}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
+        <i class="fas fa-plus-circle"></i> Add New Doctor
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialty</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for doctor in doctors %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user-md text-teal-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">{{ doctor.full_name }}</p>
+                                <p class="text-xs text-gray-500">{{ doctor.user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ doctor.specialty }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ doctor.phone or '—' }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full {% if doctor.user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ 'Active' if doctor.user.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <a href="#" class="text-blue-600 hover:text-blue-800 mr-3" title="Edit"><i class="fas fa-edit"></i></a>
+                        <a href="{{ url_for('admin.delete_doctor', doctor_id=doctor.id) }}" onclick="return confirm('Delete this doctor permanently?')" class="text-red-600 hover:text-red-800" title="Delete"><i class="fas fa-trash-alt"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if not doctors %}
+    <div class="text-center py-8 text-gray-500">No doctors registered yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

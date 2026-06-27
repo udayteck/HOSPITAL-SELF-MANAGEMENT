@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Availability (Time Slots)</h2>
+<form method="POST">
+    <div class="mb-3">
+        <label>Date (YYYY-MM-DD)</label>
+        <input type="date" name="date" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label>Start Time (HH:MM, 24h)</label>
+        <input type="time" name="start_time" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label>End Time (HH:MM, 24h)</label>
+        <input type="time" name="end_time" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Create Slots</button>
+    <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>
+<small class="text-muted">Slots will be created in {{ slot_duration }} minute intervals (admin setting).</small>
+{% endblock %}

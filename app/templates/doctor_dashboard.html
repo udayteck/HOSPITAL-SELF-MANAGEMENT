@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard - SKD Hospital{% endblock %}
+{% block content %}
+
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Welcome, Dr. {{ doctor.full_name }}</h1>
+    <p class="text-gray-500">{{ doctor.specialty }} · {{ doctor.user.email }}</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-teal-500">
+        <div class="flex items-center justify-between">
+            <div><i class="fas fa-calendar-day text-teal-600 text-3xl"></i></div>
+            <div class="text-right">
+                <p class="text-gray-500 text-sm">Today's Appointments</p>
+                <p class="text-3xl font-bold text-gray-800">{{ today_appointments|length }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div><i class="fas fa-calendar-plus text-blue-600 text-3xl"></i></div>
+            <div class="text-right">
+                <p class="text-gray-500 text-sm">Upcoming</p>
+                <p class="text-3xl font-bold text-gray-800">{{ upcoming_appointments|length }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div><i class="fas fa-users text-purple-600 text-3xl"></i></div>
+            <div class="text-right">
+                <p class="text-gray-500 text-sm">Total Patients Seen</p>
+                <p class="text-3xl font-bold text-gray-800">{{ seen_patients }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Requests -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+    <div class="px-6 py-4 bg-yellow-50 border-b flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-800">⏳ Pending Requests</h2>
+        <span class="bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full text-xs">{{ pending_requests|length }}</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for req in pending_requests %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ req.patient.full_name }}</td>
+                    <td class="px-6 py-4">{{ req.availability.slot_start.strftime('%d/%m/%Y %I:%M %p') }}</td>
+                    <td class="px-6 py-4">{{ req.reason_visit or '—' }}</td>
+                    <td class="px-6 py-4">
+                        <form method="POST" action="{{ url_for('doctor.respond_appointment', appointment_id=req.id) }}" class="flex gap-2">
+                            <button type="submit" name="action" value="confirm" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition">Confirm</button>
+                            <button type="submit" name="action" value="reject" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No pending requests.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Today's Appointments -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+    <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-800">📋 Today's Schedule</h2>
+        <a href="{{ url_for('doctor.add_availability') }}" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded-lg text-sm transition flex items-center gap-1">
+            <i class="fas fa-plus-circle"></i> Add Slots
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for apt in today_appointments %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ apt.availability.slot_start.strftime('%I:%M %p') }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('doctor.patient_record', patient_id=apt.patient.id) }}" class="text-teal-600 hover:underline">
+                            {{ apt.patient.full_name }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-sm">{{ apt.reason_visit or '—' }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if apt.status == 'scheduled' %}bg-blue-100 text-blue-800
+                            {% elif apt.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif apt.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ apt.status }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if apt.status == 'scheduled' %}
+                        <form method="POST" action="{{ url_for('doctor.update_appointment_status', appointment_id=apt.id) }}" class="flex gap-2">
+                            <button type="submit" name="status" value="completed" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition">Completed</button>
+                            <button type="submit" name="status" value="no_show" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition">No-Show</button>
+                        </form>
+                        {% else %}
+                        <span class="text-gray-400 text-sm">Done</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No appointments today.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Upcoming Appointments -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+    <div class="px-6 py-4 bg-gray-50 border-b">
+        <h2 class="text-xl font-semibold text-gray-800">📅 Upcoming Appointments</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for apt in upcoming_appointments %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ apt.availability.slot_start.strftime('%d/%m/%Y %I:%M %p') }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('doctor.patient_record', patient_id=apt.patient.id) }}" class="text-teal-600 hover:underline">
+                            {{ apt.patient.full_name }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-sm">{{ apt.reason_visit or '—' }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ apt.status }}</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No upcoming appointments.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Patient Records (Quick List) -->
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b">
+        <h2 class="text-xl font-semibold text-gray-800">👤 Recent Patients</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Visit</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for patient, last_visit in patient_records %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">{{ patient.full_name }}</td>
+                    <td class="px-6 py-4">{{ patient.phone or '—' }}</td>
+                    <td class="px-6 py-4">{{ last_visit.strftime('%d/%m/%Y %H:%M') if last_visit else '—' }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('doctor.patient_record', patient_id=patient.id) }}" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-xs transition">View Records</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No patients yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
