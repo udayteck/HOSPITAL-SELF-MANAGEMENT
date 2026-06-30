@@ -1,23 +1,17 @@
 import os
 from app import create_app, db
-from app.models import User, GlobalSetting
 
 app = create_app()
 
-# ---------- DEBUG: Check email environment variables ----------
-print(f"📧 MAIL_USERNAME: {os.environ.get('MAIL_USERNAME')}")
-print(f"📧 MAIL_PASSWORD set: {bool(os.environ.get('MAIL_PASSWORD'))}")
-# --------------------------------------------------------------
-
-# ---------- FORCE RAILWAY DATABASE ----------
-# Override any hardcoded value with the environment variable
+# Force database URI from environment
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-# Print the actual URI being used – check the logs after deployment!
 print(f"🔗 Using database: {app.config['SQLALCHEMY_DATABASE_URI']}")
-# --------------------------------------------
 
 # ----- THIS RUNS ON RAILWAY (and locally) -----
 with app.app_context():
+    # Import models INSIDE the app context
+    from app.models import User, GlobalSetting
+    
     db.create_all()
     
     # Create admin user if none exists
