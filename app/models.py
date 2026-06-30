@@ -1,10 +1,13 @@
+import secrets
+import string
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
-from app import db
 
-# ---------- User Model ----------
+db = SQLAlchemy()
+
+# ---------- User ----------
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -15,7 +18,6 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     patient = db.relationship('Patient', backref='user', uselist=False)
     doctor = db.relationship('Doctor', backref='user', uselist=False)
     receptionist = db.relationship('Receptionist', backref='user', uselist=False)
@@ -47,7 +49,6 @@ class Patient(db.Model):
     medical_history = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     appointments = db.relationship('Appointment', backref='patient', lazy=True)
     prescriptions = db.relationship('Prescription', backref='patient', lazy=True)
     bills = db.relationship('Bill', backref='patient', lazy=True)
@@ -72,7 +73,6 @@ class Doctor(db.Model):
     fee = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     appointments = db.relationship('Appointment', backref='doctor', lazy=True)
     prescriptions = db.relationship('Prescription', backref='doctor', lazy=True)
     availabilities = db.relationship('Availability', backref='doctor', lazy=True)
@@ -110,7 +110,6 @@ class Appointment(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     prescriptions = db.relationship('Prescription', backref='appointment', lazy=True)
     bill = db.relationship('Bill', backref='appointment', uselist=False)
 
@@ -223,7 +222,40 @@ class EmailVerification(db.Model):
     email = db.Column(db.String(120), nullable=False)
     otp = db.Column(db.String(6), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(minutes=10))
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    @classmethod
+    def generate_otp(cls, length=6):
+        """Generate a numeric OTP of given length."""
+        return ''.join(secrets.choice(string.digits) for _ in range(length))
+
+    @classmethod
+    def create_otp(cls, email, length=6, expiry_minutes=10):
+        """Create and store an OTP for the given email."""
+        otp = cls.generate_otp(length)
+        expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
+        # Delete any existing OTP for this email
+        cls.query.filter_by(email=email).delete()
+        db.session.commit()
+        record = cls(email=email, otp=otp, expires_at=expires_at)
+        db.session.add(record)
+        db.session.commit()
+        return otp
+
+    @classmethod
+    def verify_otp(cls, email, otp):
+        """Verify OTP for the given email."""
+        record = cls.query.filter_by(email=email).first()
+        if not record:
+            return False
+        if record.otp != otp:
+            return False
+        if datetime.utcnow() > record.expires_at:
+            return False
+        # OTP is valid; delete it to prevent reuse
+        db.session.delete(record)
+        db.session.commit()
+        return True
 
     def __repr__(self):
         return f'<EmailVerification {self.email}>'
