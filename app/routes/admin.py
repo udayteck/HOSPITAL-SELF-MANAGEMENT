@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_required, current_user
-from app import db
-from app.models import User, Doctor, Patient, Appointment, Availability, Receptionist, GlobalSetting, Bill, Insurance
+from app.extensions import db
+from app.models import (
+    User, Doctor, Patient, Appointment, Availability, 
+    Receptionist, GlobalSetting, Bill, Insurance
+)
 from app.forms import DoctorForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
@@ -37,7 +40,7 @@ def dashboard():
         doctors_data.append({
             'id': doc.id,
             'name': doc.full_name,
-            'specialty': doc.specialization,   # corrected field name
+            'specialty': doc.specialization,
             'phone': doc.phone,
             'email': doc.user.email,
             'availability_count': availability_count,
@@ -143,7 +146,7 @@ def add_doctor():
         doctor = Doctor(
             user_id=user.id,
             full_name=form.full_name.data,
-            specialization=form.specialty.data,   # corrected field
+            specialization=form.specialty.data,
             phone=form.phone.data
         )
         db.session.add(doctor)
@@ -162,6 +165,18 @@ def delete_doctor(doctor_id):
     db.session.delete(user)
     db.session.commit()
     flash('Doctor deleted', 'success')
+    return redirect(url_for('admin.manage_doctors'))
+
+@admin_bp.route('/doctors/disable/<int:user_id>')
+@login_required
+@admin_required
+def disable_doctor(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.role == 'doctor':
+        user.is_active = not user.is_active
+        db.session.commit()
+        status = 'disabled' if not user.is_active else 'enabled'
+        flash(f'Doctor {status}', 'success')
     return redirect(url_for('admin.manage_doctors'))
 
 
@@ -229,13 +244,24 @@ def delete_receptionist(receptionist_id):
     flash('Receptionist deleted', 'success')
     return redirect(url_for('admin.manage_receptionists'))
 
+@admin_bp.route('/receptionists/disable/<int:user_id>')
+@login_required
+@admin_required
+def disable_receptionist(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.role == 'receptionist':
+        user.is_active = not user.is_active
+        db.session.commit()
+        status = 'disabled' if not user.is_active else 'enabled'
+        flash(f'Receptionist {status}', 'success')
+    return redirect(url_for('admin.manage_receptionists'))
+
 
 # ========== APPOINTMENT MANAGEMENT ==========
 @admin_bp.route('/appointments')
 @login_required
 @admin_required
 def all_appointments():
-    # Order by appointment date and start time
     appointments = Appointment.query.order_by(Appointment.date.desc(), Appointment.start_time.desc()).all()
     return render_template('all_appointments.html', appointments=appointments)
 
