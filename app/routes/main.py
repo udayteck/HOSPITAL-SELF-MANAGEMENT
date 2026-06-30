@@ -4,7 +4,7 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    return "Welcome to SKD Hospital System"
+     return render_template('base.html')
 
 @main_bp.route('/home')
 def home():
