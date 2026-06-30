@@ -1,11 +1,9 @@
 import secrets
 import string
 from datetime import datetime, timedelta
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
-db = SQLAlchemy()
+from app.extensions import db   # <-- import from extensions
 
 # ---------- User ----------
 class User(UserMixin, db.Model):
@@ -222,7 +220,7 @@ class EmailVerification(db.Model):
     email = db.Column(db.String(120), nullable=False)
     otp = db.Column(db.String(6), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(minutes=10))
 
     @classmethod
     def generate_otp(cls, length=6):
