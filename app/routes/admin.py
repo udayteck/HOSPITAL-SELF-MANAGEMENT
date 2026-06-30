@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, Blueprint
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Doctor, Patient, Appointment, Availability, Receptionist, GlobalSetting, Bill, Insurance
@@ -14,9 +14,10 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != 'admin':
             flash('Admin access required.', 'danger')
-            return redirect(url_for('index'))
+            return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated
+
 
 # ========== DASHBOARD ==========
 @admin_bp.route('/dashboard')
@@ -27,7 +28,8 @@ def dashboard():
     patient_count = Patient.query.count()
     receptionist_count = Receptionist.query.count()
     appointment_count = Appointment.query.count()
-    
+
+    # Doctors with availability count
     doctors = Doctor.query.all()
     doctors_data = []
     for doc in doctors:
@@ -35,13 +37,14 @@ def dashboard():
         doctors_data.append({
             'id': doc.id,
             'name': doc.full_name,
-            'specialty': doc.specialty,
+            'specialty': doc.specialization,   # corrected field name
             'phone': doc.phone,
             'email': doc.user.email,
             'availability_count': availability_count,
             'is_active': doc.user.is_active
         })
-    
+
+    # Patients with appointment count
     patients = Patient.query.all()
     patients_data = []
     for pat in patients:
@@ -55,7 +58,8 @@ def dashboard():
             'appointment_count': appointment_count_pat,
             'is_active': pat.user.is_active
         })
-    
+
+    # Receptionists
     receptionists = Receptionist.query.all()
     receptionists_data = []
     for rec in receptionists:
@@ -66,29 +70,33 @@ def dashboard():
             'phone': rec.phone,
             'is_active': rec.user.is_active
         })
-    
+
+    # Appointment status breakdown
     total_appointments = Appointment.query.count()
     completed = Appointment.query.filter_by(status='completed').count()
     cancelled = Appointment.query.filter_by(status='cancelled').count()
     scheduled = Appointment.query.filter_by(status='scheduled').count()
     no_show = Appointment.query.filter_by(status='no_show').count()
     noshow_rate = (no_show / total_appointments * 100) if total_appointments > 0 else 0
-    
+
+    # Last 7 days appointments (by Appointment.date)
     last_7_days = []
     appointments_per_day = []
+    today = datetime.utcnow().date()
     for i in range(6, -1, -1):
-        day = datetime.utcnow().date() - timedelta(days=i)
+        day = today - timedelta(days=i)
         last_7_days.append(day.strftime('%a, %d %b'))
-        count = Appointment.query.join(Availability).filter(func.date(Availability.slot_start) == day).count()
+        count = Appointment.query.filter(Appointment.date == day).count()
         appointments_per_day.append(count)
-    
+
+    # Monthly counts (by Appointment.date)
     monthly_labels = []
     monthly_counts = []
     for m in range(1, 13):
         monthly_labels.append(datetime(2026, m, 1).strftime('%b'))
-        count = Appointment.query.filter(extract('month', Appointment.created_at) == m).count()
+        count = Appointment.query.filter(extract('month', Appointment.date) == m).count()
         monthly_counts.append(count)
-    
+
     return render_template(
         'admin_dashboard.html',
         doctor_count=doctor_count,
@@ -109,6 +117,7 @@ def dashboard():
         monthly_labels=monthly_labels,
         monthly_counts=monthly_counts
     )
+
 
 # ========== DOCTOR MANAGEMENT ==========
 @admin_bp.route('/doctors')
@@ -131,7 +140,12 @@ def add_doctor():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.flush()
-        doctor = Doctor(user_id=user.id, full_name=form.full_name.data, specialty=form.specialty.data, phone=form.phone.data)
+        doctor = Doctor(
+            user_id=user.id,
+            full_name=form.full_name.data,
+            specialization=form.specialty.data,   # corrected field
+            phone=form.phone.data
+        )
         db.session.add(doctor)
         db.session.commit()
         flash('Doctor added successfully', 'success')
@@ -149,6 +163,7 @@ def delete_doctor(doctor_id):
     db.session.commit()
     flash('Doctor deleted', 'success')
     return redirect(url_for('admin.manage_doctors'))
+
 
 # ========== PATIENT MANAGEMENT ==========
 @admin_bp.route('/patients')
@@ -169,6 +184,7 @@ def disable_patient(user_id):
         status = 'disabled' if not user.is_active else 'enabled'
         flash(f'Patient {status}', 'success')
     return redirect(url_for('admin.manage_patients'))
+
 
 # ========== RECEPTIONIST MANAGEMENT ==========
 @admin_bp.route('/receptionists')
@@ -213,13 +229,16 @@ def delete_receptionist(receptionist_id):
     flash('Receptionist deleted', 'success')
     return redirect(url_for('admin.manage_receptionists'))
 
+
 # ========== APPOINTMENT MANAGEMENT ==========
 @admin_bp.route('/appointments')
 @login_required
 @admin_required
 def all_appointments():
-    appointments = Appointment.query.join(Availability).order_by(Availability.slot_start.desc()).all()
+    # Order by appointment date and start time
+    appointments = Appointment.query.order_by(Appointment.date.desc(), Appointment.start_time.desc()).all()
     return render_template('all_appointments.html', appointments=appointments)
+
 
 # ========== BILLS MANAGEMENT ==========
 @admin_bp.route('/bills')
@@ -248,12 +267,12 @@ def generate_bill():
         amount = float(request.form.get('amount'))
         items = request.form.get('items')
         status = request.form.get('status', 'Pending')
-        
+
         patient = Patient.query.get(patient_id)
         if not patient:
             flash('Patient not found', 'danger')
             return redirect(url_for('admin.generate_bill'))
-        
+
         bill_number = f"BILL-{datetime.utcnow().strftime('%Y%m%d')}-{Bill.query.count() + 1}"
         bill = Bill(
             bill_number=bill_number,
@@ -268,7 +287,7 @@ def generate_bill():
         db.session.commit()
         flash(f'Bill {bill_number} generated successfully', 'success')
         return redirect(url_for('admin.manage_bills'))
-    
+
     patients = Patient.query.all()
     appointments = Appointment.query.filter_by(status='scheduled').all()
     return render_template('bill_form.html', patients=patients, appointments=appointments, title='Generate New Bill')
@@ -291,25 +310,27 @@ def edit_bill(bill_id):
         amount = float(request.form.get('amount'))
         items = request.form.get('items')
         status = request.form.get('status')
-        
+
         patient = Patient.query.get(patient_id)
         if not patient:
             flash('Patient not found', 'danger')
             return redirect(url_for('admin.edit_bill', bill_id=bill.id))
-        
+
         bill.patient_id = patient_id
         bill.appointment_id = appointment_id if appointment_id else None
         bill.amount = amount
         bill.items = items
         bill.status = status
         db.session.commit()
-        
+
         flash('Bill updated successfully!', 'success')
         return redirect(url_for('admin.view_bill', bill_id=bill.id))
-    
+
     patients = Patient.query.all()
     appointments = Appointment.query.filter_by(status='scheduled').all()
     return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
+
+
 # ========== PATIENT INSURANCE (ADMIN) ==========
 @admin_bp.route('/patient/<int:patient_id>/insurance')
 @login_required
@@ -367,6 +388,8 @@ def edit_patient_insurance(patient_id):
         return redirect(url_for('admin.view_patient_insurance', patient_id=patient.id))
 
     return render_template('admin_edit_patient_insurance.html', patient=patient, insurance=insurance)
+
+
 # ========== REPORTS & SETTINGS ==========
 @admin_bp.route('/reports')
 @login_required
