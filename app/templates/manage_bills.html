@@ -2,120 +2,122 @@
 {% block title %}Bills & Accounts - SKD Hospital{% endblock %}
 {% block content %}
 
-<div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-    <h1 class="text-2xl font-bold text-white">💰 Bills & Accounts</h1>
-    <a href="
-        {% if current_user.role == 'admin' %}
-            {{ url_for('admin.generate_bill') }}
-        {% else %}
-            {{ url_for('receptionist.generate_bill') }}
-        {% endif %}
-    " class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg">
-        <i class="fas fa-plus-circle"></i> Generate New Bill
-    </a>
-</div>
+<div class="container mx-auto px-4 py-8">
+    <!-- Header and Generate Button -->
+    <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <h1 class="text-2xl font-bold text-white text-glow">💰 Bills & Accounts</h1>
+        <a href="
+            {% if current_user.role == 'admin' %}
+                {{ url_for('admin.generate_bill') }}
+            {% else %}
+                {{ url_for('receptionist.generate_bill') }}
+            {% endif %}
+        " class="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white px-5 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-teal-500/30">
+            <i class="fas fa-plus-circle"></i> Generate New Bill
+        </a>
+    </div>
 
-<!-- Financial Summary Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white/10 backdrop-blur-md rounded-xl shadow p-5 border-l-4 border-green-400">
-        <div class="flex items-center justify-between">
-            <div><i class="fas fa-rupee-sign text-green-300 text-2xl"></i></div>
-            <div class="text-right">
-                <p class="text-white/70 text-sm">Total Revenue</p>
-                <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(total_amount) }}</p>
+    <!-- Financial Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass p-5 rounded-xl border-l-4 border-green-400">
+            <div class="flex items-center justify-between">
+                <div><i class="fas fa-rupee-sign text-green-300 text-2xl"></i></div>
+                <div class="text-right">
+                    <p class="text-white/70 text-sm">Total Revenue</p>
+                    <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(total_amount) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-xl border-l-4 border-blue-400">
+            <div class="flex items-center justify-between">
+                <div><i class="fas fa-check-circle text-blue-300 text-2xl"></i></div>
+                <div class="text-right">
+                    <p class="text-white/70 text-sm">Paid Amount</p>
+                    <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(paid_amount) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-xl border-l-4 border-yellow-400">
+            <div class="flex items-center justify-between">
+                <div><i class="fas fa-clock text-yellow-300 text-2xl"></i></div>
+                <div class="text-right">
+                    <p class="text-white/70 text-sm">Pending Amount</p>
+                    <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(pending_amount) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-xl border-l-4 border-red-400">
+            <div class="flex items-center justify-between">
+                <div><i class="fas fa-exclamation-triangle text-red-300 text-2xl"></i></div>
+                <div class="text-right">
+                    <p class="text-white/70 text-sm">Overdue</p>
+                    <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(overdue_amount) }}</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="bg-white/10 backdrop-blur-md rounded-xl shadow p-5 border-l-4 border-blue-400">
-        <div class="flex items-center justify-between">
-            <div><i class="fas fa-check-circle text-blue-300 text-2xl"></i></div>
-            <div class="text-right">
-                <p class="text-white/70 text-sm">Paid Amount</p>
-                <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(paid_amount) }}</p>
-            </div>
+
+    <!-- Bills Table -->
+    <div class="glass rounded-2xl overflow-hidden border border-white/10">
+        <div class="px-6 py-4 bg-white/5 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">All Bills</h2>
         </div>
-    </div>
-    <div class="bg-white/10 backdrop-blur-md rounded-xl shadow p-5 border-l-4 border-yellow-400">
-        <div class="flex items-center justify-between">
-            <div><i class="fas fa-clock text-yellow-300 text-2xl"></i></div>
-            <div class="text-right">
-                <p class="text-white/70 text-sm">Pending Amount</p>
-                <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(pending_amount) }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white/10 backdrop-blur-md rounded-xl shadow p-5 border-l-4 border-red-400">
-        <div class="flex items-center justify-between">
-            <div><i class="fas fa-exclamation-triangle text-red-300 text-2xl"></i></div>
-            <div class="text-right">
-                <p class="text-white/70 text-sm">Overdue</p>
-                <p class="text-2xl font-bold text-white">₹{{ "%.2f"|format(overdue_amount) }}</p>
-            </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Bill No.</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Patient</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Insurance</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Description</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Amount</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Status</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6 font-mono text-sm">{{ bill.bill_number or bill.id }}</td>
+                        <td class="py-4 px-6">{{ bill.patient.full_name }}</td>
+                        <td class="py-4 px-6 text-sm">
+                            {% set insurances = bill.patient.insurances %}
+                            {% if insurances %}
+                                <span class="text-teal-300">{{ insurances[0].provider }}</span>
+                                <span class="text-xs text-white/50 block">{{ insurances[0].policy_number }}</span>
+                            {% else %}
+                                <span class="text-white/30 italic">None</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-white/80">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-4 px-6 text-white/80 text-sm">{{ bill.description or 'N/A' }}</td>
+                        <td class="py-4 px-6 font-semibold">₹{{ "%.2f"|format(bill.amount) }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                       {% if bill.status == 'paid' or bill.status == 'Paid' %}bg-green-500/20 text-green-300
+                                       {% elif bill.status == 'pending' or bill.status == 'Pending' %}bg-yellow-500/20 text-yellow-300
+                                       {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                {{ bill.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('admin.view_bill', bill_id=bill.id) }}" class="text-teal-300 hover:text-teal-100 mr-3" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_bill', bill_id=bill.id) }}" class="text-yellow-300 hover:text-yellow-100 mr-3" title="Edit"><i class="fas fa-edit"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('receptionist.view_bill', bill_id=bill.id) }}" class="text-teal-300 hover:text-teal-100 mr-3" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('receptionist.edit_bill', bill_id=bill.id) }}" class="text-yellow-300 hover:text-yellow-100 mr-3" title="Edit"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            <a href="#" onclick="window.print()" class="text-blue-300 hover:text-blue-100" title="Print"><i class="fas fa-print"></i></a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="py-8 text-center text-white/40">No bills generated yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<!-- Bills Table with Insurance Column -->
-<div class="bg-white/10 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-white/10">
-    <div class="px-6 py-4 bg-white/5 border-b border-white/10">
-        <h2 class="text-xl font-semibold text-white">All Bills</h2>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-white/10">
-            <thead class="bg-white/5">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Bill No.</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Patient</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Insurance</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Date</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Items</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-white/10">
-                {% for bill in bills %}
-                <tr class="hover:bg-white/5 transition">
-                    <td class="px-6 py-4 text-white/90 font-mono text-sm">{{ bill.bill_number }}</td>
-                    <td class="px-6 py-4 text-white/90">{{ bill.patient.full_name }}</td>
-                    <td class="px-6 py-4 text-white/80 text-sm">
-                        {% if bill.patient.insurance %}
-                            <span class="text-teal-300">{{ bill.patient.insurance.provider_name }}</span>
-                            <span class="text-xs text-white/50 block">{{ bill.patient.insurance.policy_number }}</span>
-                        {% else %}
-                            <span class="text-white/30 italic">None</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 text-white/80">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
-                    <td class="px-6 py-4 text-white/80 text-sm">{{ bill.items[:50] }}{% if bill.items|length > 50 %}...{% endif %}</td>
-                    <td class="px-6 py-4 text-white font-semibold">₹{{ "%.2f"|format(bill.amount) }}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs rounded-full 
-                            {% if bill.status == 'Paid' %}bg-green-500/30 text-green-200
-                            {% elif bill.status == 'Pending' %}bg-yellow-500/30 text-yellow-200
-                            {% else %}bg-red-500/30 text-red-200{% endif %}">
-                            {{ bill.status }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        {% if current_user.role == 'admin' %}
-                            <a href="{{ url_for('admin.view_bill', bill_id=bill.id) }}" class="text-teal-300 hover:text-teal-100 mr-3" title="View Bill"><i class="fas fa-eye"></i></a>
-                            <a href="{{ url_for('admin.edit_bill', bill_id=bill.id) }}" class="text-yellow-300 hover:text-yellow-100 mr-3" title="Edit Bill"><i class="fas fa-edit"></i></a>
-                        {% else %}
-                            <a href="{{ url_for('receptionist.view_bill', bill_id=bill.id) }}" class="text-teal-300 hover:text-teal-100 mr-3" title="View Bill"><i class="fas fa-eye"></i></a>
-                            <a href="{{ url_for('receptionist.edit_bill', bill_id=bill.id) }}" class="text-yellow-300 hover:text-yellow-100 mr-3" title="Edit Bill"><i class="fas fa-edit"></i></a>
-                        {% endif %}
-                        <a href="#" onclick="window.print()" class="text-blue-300 hover:text-blue-100" title="Print"><i class="fas fa-print"></i></a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% if not bills %}
-    <div class="text-center py-8 text-white/70">No bills generated yet. Click "Generate New Bill" to create one.</div>
-    {% endif %}
-</div>
-
 {% endblock %}
