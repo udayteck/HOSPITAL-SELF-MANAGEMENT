@@ -35,7 +35,7 @@ def send_otp():
         return jsonify({'success': False, 'message': 'Email already registered'}), 400
     
     # Generate OTP
-    otp = EmailVerification.generate_otp()
+    otp = EmailVerification.generate_otp(email)
     # Delete any previous unused OTPs for this email
     EmailVerification.query.filter_by(email=email, is_used=False).delete()
     
