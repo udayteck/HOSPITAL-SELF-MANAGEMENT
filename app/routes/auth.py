@@ -1,74 +1,34 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, session, Blueprint
-from flask_login import login_user, logout_user, current_user, login_required
-from app import db, mail
-from app.models import User, Patient, EmailVerification
-from app.forms import RegistrationForm, LoginForm
-from app.email_helper import send_html_email, build_skd_email_template   # <-- NEW IMPORT
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
+from flask_login import login_user, logout_user, login_required, current_user
+from app.extensions import db
+from app.models import User, Patient, Doctor, EmailVerification
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-import random
-from threading import Thread
-from flask_mail import Message
+import re
 
 auth_bp = Blueprint('auth', __name__)
 
-# ---------- Helper: send plain email (fallback, not used anymore) ----------
-def send_async_email(app, msg):
-    with app.app_context():
-        mail.send(msg)
+def is_valid_email(email):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email)
 
-def send_email_async(recipient, subject, body):
-    from flask import current_app
-    msg = Message(subject, recipients=[recipient])
-    msg.body = body
-    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
-# ---------- OTP routes (with HTML email) ----------
 @auth_bp.route('/send-otp', methods=['POST'])
 def send_otp():
     data = request.get_json()
     email = data.get('email')
-    if not email:
-        return jsonify({'success': False, 'message': 'Email required'}), 400
-    
-    # Check if email already registered
-    if User.query.filter_by(email=email).first():
-        return jsonify({'success': False, 'message': 'Email already registered'}), 400
-    
-    # Generate OTP
-    otp = EmailVerification.generate_otp(email)
-    # Delete any previous unused OTPs for this email
-    EmailVerification.query.filter_by(email=email, is_used=False).delete()
-    
-    # Save new OTP
-    expiry = datetime.utcnow() + timedelta(minutes=10)
-    verification = EmailVerification(email=email, otp=otp, expires_at=expiry)
-    db.session.add(verification)
-    db.session.commit()
-    
-    # ---------- ATTRACTIVE HTML OTP EMAIL ----------
-    subject = "Your OTP for SKD Hospital Registration"
-    html_content = build_skd_email_template(
-        title="Email Verification",
-        greeting_text="Hello,",
-        main_content=f"""
-        <p>You requested to register at SKD Hospital. Use the OTP below to verify your email address.</p>
-        <div style="background: #f0fdfa; border-left: 5px solid #14b8a6; border-radius: 12px; padding: 16px; margin: 24px 0; text-align: center;">
-            <p style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #0f766e;">{otp}</p>
-            <p style="color: #0f766e;">This OTP is valid for 10 minutes.</p>
-        </div>
-        <p>If you did not request this, please ignore this email.</p>
-        """
-    )
-    # Send HTML email (asynchronous)
+    if not email or not is_valid_email(email):
+        return jsonify({'success': False, 'message': 'Invalid email address'}), 400
+
+    # Generate and store OTP using the model method
     try:
-        send_html_email(email, subject, html_content)
-        print(f"✅ OTP HTML email sent to {email}")
+        otp = EmailVerification.create_otp(email)
+        # For testing, we log the OTP (remove in production)
+        print(f"OTP for {email}: {otp}")
+        # In production, send email here
+        return jsonify({'success': True, 'message': 'OTP sent successfully'})
     except Exception as e:
-        print(f"❌ Failed to send HTML email: {e}")
-        # Fallback: print OTP to console for development
-        print(f"\n🔐 OTP for {email}: {otp}\n")
-    
-    return jsonify({'success': True, 'message': 'OTP sent to your email'})
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @auth_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
@@ -77,101 +37,112 @@ def verify_otp():
     otp = data.get('otp')
     if not email or not otp:
         return jsonify({'success': False, 'message': 'Email and OTP required'}), 400
-    
-    if EmailVerification.is_valid(email, otp):
-        # Store verified email in session temporarily
+
+    if EmailVerification.verify_otp(email, otp):
         session['verified_email'] = email
         return jsonify({'success': True, 'message': 'OTP verified'})
     else:
         return jsonify({'success': False, 'message': 'Invalid or expired OTP'}), 400
 
-# ---------- Regular routes ----------
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
 
     if request.method == 'POST':
-        print("🔍 Registration POST received")
-        verified_email = session.get('verified_email')
-        print(f"Verified email from session: {verified_email}")
-        if not verified_email:
-            flash('Please verify your email first.', 'danger')
-            return redirect(url_for('auth.register'))
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        full_name = request.form.get('full_name')
+        role = request.form.get('role', 'patient')
 
-        form = RegistrationForm()
-        if form.validate_on_submit():
-            print(f"Form valid. Email: {form.email.data}, Name: {form.full_name.data}")
-            if form.email.data != verified_email:
-                flash('Email mismatch. Please re-verify.', 'danger')
-                return redirect(url_for('auth.register'))
+        # Basic validation
+        if not email or not password or not full_name:
+            flash('All fields are required.', 'danger')
+            return render_template('register.html')
 
-            # Create user
-            user = User(email=form.email.data, role='patient', is_active=True)
-            user.set_password(form.password.data)
-            db.session.add(user)
-            db.session.flush()
-            print(f"User created with id: {user.id}")
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('register.html')
 
-            patient = Patient(
-                user_id=user.id,
-                full_name=form.full_name.data,
-                phone=form.phone.data
-            )
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'danger')
+            return render_template('register.html')
+
+        # Check if email already registered
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered. Please login.', 'danger')
+            return render_template('register.html')
+
+        # Ensure email is verified (OTP verified in session)
+        if session.get('verified_email') != email:
+            flash('Please verify your email with OTP first.', 'danger')
+            return render_template('register.html')
+
+        # Create user
+        user = User(email=email, role=role, is_active=True)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+
+        # Create patient profile (default role)
+        if role == 'patient':
+            patient = Patient(user_id=user.id, full_name=full_name)
             db.session.add(patient)
-            db.session.commit()
-            print("Patient profile created")
+        # Could also handle doctor/receptionist registration here if needed
 
-            session.pop('verified_email', None)
-            flash('Registration successful! Please log in.', 'success')
-            return redirect(url_for('auth.login'))
-        else:
-            print(f"Form errors: {form.errors}")
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"{field}: {error}", 'danger')
-        return render_template('register.html', form=form)
+        db.session.commit()
 
-    form = RegistrationForm()
-    return render_template('register.html', form=form)
+        # Clear verification session
+        session.pop('verified_email', None)
+
+        flash('Registration successful! Please login.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('register.html')
+
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('patient.dashboard'))
+        return redirect(url_for('main.index'))
 
     if request.method == 'POST':
-        # Manual extraction from request (bypass WTForms for debug)
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-        print(f"🔍 Login attempt: email={email}, password length={len(password)}")
+        email = request.form.get('email')
+        password = request.form.get('password')
+        remember = request.form.get('remember', False)
 
         user = User.query.filter_by(email=email).first()
-        if user:
-            print(f"✅ User found: {user.email}, role={user.role}, active={user.is_active}")
-            print(f"🔑 Password check: {user.check_password(password)}")
-            if user.check_password(password) and user.is_active:
-                login_user(user)
-                flash('Login successful!', 'success')
-                if user.role == 'patient':
-                    return redirect(url_for('patient.dashboard'))
-                elif user.role == 'doctor':
-                    return redirect(url_for('doctor.dashboard'))
-                elif user.role == 'receptionist':
-                    return redirect(url_for('receptionist.dashboard'))
-                elif user.role == 'admin':
-                    return redirect(url_for('admin.dashboard'))
-        else:
-            print("❌ No user with that email.")
+        if not user or not user.check_password(password):
+            flash('Invalid email or password.', 'danger')
+            return render_template('login.html')
 
-        flash('Invalid email or password.', 'danger')
-        return render_template('login.html')
+        if not user.is_active:
+            flash('Account is disabled.', 'danger')
+            return render_template('login.html')
 
-    # GET request – show login form
+        login_user(user, remember=remember)
+        next_page = request.args.get('next')
+        if next_page:
+            return redirect(next_page)
+        # Redirect based on role
+        if user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        elif user.role == 'doctor':
+            return redirect(url_for('doctor.dashboard'))
+        elif user.role == 'receptionist':
+            return redirect(url_for('receptionist.dashboard'))
+        elif user.role == 'patient':
+            return redirect(url_for('patient.dashboard'))
+        return redirect(url_for('main.index'))
+
     return render_template('login.html')
+
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.', 'info')
+    flash('You have been logged out.', 'success')
     return redirect(url_for('main.index'))
