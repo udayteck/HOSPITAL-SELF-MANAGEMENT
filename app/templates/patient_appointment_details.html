@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{{ url_for('patient.dashboard') }}" class="text-teal-400 hover:text-teal-300">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="glass p-8 rounded-2xl">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white text-glow">Appointment Details</h1>
+                <p class="text-white/50 text-sm mt-1">ID: #{{ appointment.id }}</p>
+            </div>
+            <span class="px-4 py-2 rounded-full text-sm font-medium 
+                       {% if appointment.status == 'scheduled' %}bg-green-500/20 text-green-300
+                       {% elif appointment.status == 'pending' %}bg-yellow-500/20 text-yellow-300
+                       {% elif appointment.status == 'completed' %}bg-blue-500/20 text-blue-300
+                       {% else %}bg-red-500/20 text-red-300{% endif %}">
+                {{ appointment.status|capitalize }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="space-y-3">
+                <div>
+                    <p class="text-white/50 text-sm">Doctor</p>
+                    <p class="text-white font-medium">Dr. {{ appointment.doctor.full_name }}</p>
+                </div>
+                <div>
+                    <p class="text-white/50 text-sm">Specialty</p>
+                    <p class="text-white">{{ appointment.doctor.specialization or 'N/A' }}</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-white/50 text-sm">Date</p>
+                    <p class="text-white font-medium">{{ appointment.date.strftime('%A, %B %d, %Y') }}</p>
+                </div>
+                <div>
+                    <p class="text-white/50 text-sm">Time</p>
+                    <p class="text-white">{{ appointment.start_time.strftime('%I:%M %p') }} - {{ appointment.end_time.strftime('%I:%M %p') }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if appointment.notes %}
+        <div class="border-t border-white/10 pt-4 mt-4">
+            <p class="text-white/50 text-sm">Notes</p>
+            <p class="text-white/80">{{ appointment.notes }}</p>
+        </div>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-white/10">
+            {% if appointment.status in ['scheduled', 'pending'] %}
+                <form method="POST" action="{{ url_for('patient.cancel_appointment', appointment_id=appointment.id) }}" class="inline">
+                    <button type="submit" class="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition font-medium" onclick="return confirm('Cancel this appointment?')">
+                        <i class="fas fa-times mr-2"></i> Cancel Appointment
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{{ url_for('patient.dashboard') }}" class="px-6 py-2 bg-white/5 hover:bg-white/10 text-white/80 rounded-lg transition">
+                <i class="fas fa-home mr-2"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
