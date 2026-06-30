@@ -1,0 +1,119 @@
+# ==============================
+#  SKD HOSPITAL SYSTEM
+#  Python + Flask + MySQL
+# ==============================
+
+# ------------------------------------
+# Virtual Environment
+# ------------------------------------
+venv/
+env/
+ENV/
+.venv/
+virtualenv/
+pyenv/
+
+# ------------------------------------
+# Byte-code / Python cache
+# ------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# ------------------------------------
+# Environment variables (secrets!)
+# ------------------------------------
+.env
+.flaskenv
+.env.local
+.env.*.local
+*.secret
+config.local.py
+secrets.py
+credentials.json
+*.pem
+*.key
+
+# ------------------------------------
+# Database files (SQLite)
+# ------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+hospital.db
+
+# ------------------------------------
+# Flask specific
+# ------------------------------------
+instance/
+flask_session/
+session/
+*.pid
+*.sock
+*.lock
+.requirements
+
+# ------------------------------------
+# Logs
+# ------------------------------------
+*.log
+logs/
+log/
+
+# ------------------------------------
+# Testing
+# ------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# ------------------------------------
+# IDE / Editor files
+# ------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ------------------------------------
+# Uploads / Media
+# ------------------------------------
+static/uploads/
+static/media/
+media/
+uploads/
+temp/
+
+# ------------------------------------
+# OS / System files
+# ------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ------------------------------------
+# Migration files (keep these committed)
+# ------------------------------------
+# migrations/   <-- DO NOT ignore this! Keep it.
+
+# ------------------------------------
+# Your temporary scripts
+# ------------------------------------
+seed_patients.py
+test_*.py
