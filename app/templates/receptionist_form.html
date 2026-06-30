@@ -1,11 +1,56 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Add Receptionist</h2>
-<form method="POST">
-    <input type="email" name="email" placeholder="Email" required><br>
-    <input type="text" name="full_name" placeholder="Full Name" required><br>
-    <input type="text" name="phone" placeholder="Phone"><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Add</button>
-</form>
+<div class="container mx-auto px-4 py-12 max-w-2xl">
+    <div class="glass p-8 rounded-2xl">
+        <h1 class="text-3xl font-bold text-white text-glow mb-2">Add Receptionist</h1>
+        <p class="text-white/50 text-sm mb-6">Create a new receptionist account</p>
+
+        <form method="POST" action="{{ url_for('admin.add_receptionist') }}" class="space-y-4">
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-white/80 text-sm font-medium mb-1">Email Address</label>
+                <input type="email" name="email" id="email" required
+                       placeholder="receptionist@hospital.com"
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition">
+            </div>
+
+            <!-- Full Name -->
+            <div>
+                <label for="full_name" class="block text-white/80 text-sm font-medium mb-1">Full Name</label>
+                <input type="text" name="full_name" id="full_name" required
+                       placeholder="John Doe"
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition">
+            </div>
+
+            <!-- Phone -->
+            <div>
+                <label for="phone" class="block text-white/80 text-sm font-medium mb-1">Phone Number</label>
+                <input type="text" name="phone" id="phone"
+                       placeholder="+1 234 567 8900"
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition">
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-white/80 text-sm font-medium mb-1">Password</label>
+                <input type="password" name="password" id="password" required minlength="6"
+                       placeholder="Min 6 characters"
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition">
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-4">
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30">
+                    <i class="fas fa-user-plus mr-2"></i> Add Receptionist
+                </button>
+                <a href="{{ url_for('admin.manage_receptionists') }}"
+                   class="flex-1 bg-white/5 hover:bg-white/10 text-white/80 font-medium py-3 rounded-lg text-center border border-white/10 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
