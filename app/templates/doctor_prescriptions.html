@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white text-glow mb-6">My Prescriptions</h1>
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Patient</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Medication</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pres in prescriptions %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6">{{ pres.patient.full_name }}</td>
+                        <td class="py-4 px-6">{{ pres.medication[:50] }}{% if pres.medication|length > 50 %}...{% endif %}</td>
+                        <td class="py-4 px-6">{{ pres.created_at.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="py-8 text-center text-white/40">No prescriptions found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
