@@ -1,32 +1,119 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>{{ title }}</h2>
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <div class="mb-3">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control") }}
+<div class="container mx-auto px-4 py-12 max-w-2xl">
+    <div class="glass p-8 rounded-2xl">
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-300 text-2xl">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white text-glow">Add Doctor</h1>
+                <p class="text-white/50 text-sm">Register a new doctor to the hospital</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('admin.add_doctor') }}" class="space-y-5">
+            {{ form.hidden_tag() }}
+
+            <!-- Email -->
+            <div>
+                {{ form.email.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-white/30"></i>
+                    </div>
+                    {{ form.email(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="doctor@hospital.com") }}
+                </div>
+                {% if form.email.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.email.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Full Name -->
+            <div>
+                {{ form.full_name.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-white/30"></i>
+                    </div>
+                    {{ form.full_name(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="Dr. John Doe") }}
+                </div>
+                {% if form.full_name.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.full_name.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Specialty -->
+            <div>
+                {{ form.specialty.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-stethoscope text-white/30"></i>
+                    </div>
+                    {{ form.specialty(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="Cardiology") }}
+                </div>
+                {% if form.specialty.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.specialty.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Phone -->
+            <div>
+                {{ form.phone.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-phone text-white/30"></i>
+                    </div>
+                    {{ form.phone(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="+1 234 567 8900") }}
+                </div>
+                {% if form.phone.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.phone.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div>
+                {{ form.password.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-white/30"></i>
+                    </div>
+                    {{ form.password(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="Min 6 characters") }}
+                </div>
+                {% if form.password.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.password.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                {{ form.confirm_password.label(class="block text-white/80 text-sm font-medium mb-1") }}
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-check-circle text-white/30"></i>
+                    </div>
+                    {{ form.confirm_password(class="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition", placeholder="Confirm password") }}
+                </div>
+                {% if form.confirm_password.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.confirm_password.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit & Cancel -->
+            <div class="flex gap-4 pt-4">
+                <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Add Doctor
+                </button>
+                <a href="{{ url_for('admin.manage_doctors') }}"
+                   class="flex-1 bg-white/5 hover:bg-white/10 text-white/80 font-medium py-3 rounded-lg text-center border border-white/10 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">
-        {{ form.full_name.label(class="form-label") }}
-        {{ form.full_name(class="form-control") }}
-    </div>
-    <div class="mb-3">
-        {{ form.specialty.label(class="form-label") }}
-        {{ form.specialty(class="form-control") }}
-    </div>
-    <div class="mb-3">
-        {{ form.phone.label(class="form-label") }}
-        {{ form.phone(class="form-control") }}
-    </div>
-    <div class="mb-3">
-        {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
-    </div>
-    <div class="mb-3">
-        {{ form.confirm_password.label(class="form-label") }}
-        {{ form.confirm_password(class="form-control") }}
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+</div>
 {% endblock %}
