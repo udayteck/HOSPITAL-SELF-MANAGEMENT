@@ -1,159 +1,134 @@
 {% extends "base.html" %}
-{% block title %}Sign Up - SKD Hospital{% endblock %}
+
 {% block content %}
+<div class="container mx-auto px-4 py-12 max-w-md">
+    <div class="glass p-8 rounded-2xl">
+        <h1 class="text-3xl font-bold text-white text-glow mb-2">Patient Registration</h1>
+        <p class="text-white/50 text-sm mb-6">Verify your email to get started</p>
 
-<div class="max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden border border-white/10">
-    <div class="bg-teal-600/80 px-6 py-4">
-        <h2 class="text-2xl font-bold text-white text-center">Patient Registration</h2>
-        <p class="text-teal-100 text-center text-sm mt-1">Verify your email to get started</p>
-    </div>
-
-    <div class="p-6 md:p-8">
-        <!-- Step 1: Email and OTP -->
-        <div id="step1" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-white/80 mb-1">Email Address</label>
-                <input type="email" id="reg-email" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" placeholder="your@example.com">
-                <p id="email-error" class="text-red-400 text-xs mt-1 hidden"></p>
+        <form method="POST" action="{{ url_for('auth.register') }}" id="register-form">
+            <!-- Full Name -->
+            <div class="mb-4">
+                <label for="full_name" class="block text-white/80 text-sm font-medium mb-1">Full Name</label>
+                <input type="text" name="full_name" id="full_name" required
+                       class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400 transition">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-white/80 mb-1">OTP</label>
-                <div class="flex gap-2 flex-wrap">
-                    <input type="text" id="reg-otp" class="flex-1 min-w-[120px] px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" placeholder="6-digit OTP" maxlength="6">
-                    <button type="button" id="sendOtpBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition">Send OTP</button>
-                    <button type="button" id="verifyOtpBtn" class="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg transition">Verify</button>
+
+            <!-- Email -->
+            <div class="mb-4">
+                <label for="email" class="block text-white/80 text-sm font-medium mb-1">Email Address</label>
+                <div class="flex gap-2">
+                    <input type="email" name="email" id="email" required
+                           class="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400 transition">
+                    <button type="button" id="send-otp-btn" 
+                            class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-medium transition">
+                        Send OTP
+                    </button>
                 </div>
-                <p id="otp-error" class="text-red-400 text-xs mt-1 hidden"></p>
+                <div id="otp-status" class="text-sm mt-1"></div>
             </div>
-        </div>
 
-        <!-- Step 2: Registration Form (hidden initially) -->
-        <div id="step2" class="hidden space-y-6">
-            <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm" novalidate>
-                {{ form.hidden_tag() }}  <!-- CSRF token -->
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-white/80 mb-1">Email Address</label>
-                        <input type="email" name="email" id="verified-email" readonly class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white/50 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-white/80 mb-1">Full Name</label>
-                        <input type="text" name="full_name" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required>
-                    </div>
+            <!-- OTP -->
+            <div class="mb-4">
+                <label for="otp" class="block text-white/80 text-sm font-medium mb-1">OTP</label>
+                <div class="flex gap-2">
+                    <input type="text" name="otp" id="otp" placeholder="6-digit OTP" maxlength="6"
+                           class="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400 transition">
+                    <button type="button" id="verify-otp-btn"
+                            class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition">
+                        Verify
+                    </button>
                 </div>
+                <div id="verify-status" class="text-sm mt-1"></div>
+            </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-white/80 mb-1">Phone Number</label>
-                    <input type="tel" name="phone" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required>
-                </div>
+            <!-- Password -->
+            <div class="mb-4">
+                <label for="password" class="block text-white/80 text-sm font-medium mb-1">Password</label>
+                <input type="password" name="password" id="password" required minlength="6"
+                       class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400 transition">
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-white/80 mb-1">Password</label>
-                        <input type="password" name="password" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required minlength="6">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-white/80 mb-1">Confirm Password</label>
-                        <input type="password" name="confirm_password" class="w-full px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-teal-400" required minlength="6">
-                    </div>
-                </div>
+            <div class="mb-6">
+                <label for="confirm_password" class="block text-white/80 text-sm font-medium mb-1">Confirm Password</label>
+                <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
+                       class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400 transition">
+            </div>
 
-                <button type="submit" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 rounded-lg transition">Complete Registration</button>
-            </form>
-        </div>
+            <!-- Hidden role (default patient) -->
+            <input type="hidden" name="role" value="patient">
+
+            <button type="submit" id="register-btn"
+                    class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30">
+                Register
+            </button>
+        </form>
+
+        <p class="text-white/50 text-sm text-center mt-4">
+            Already have an account? <a href="{{ url_for('auth.login') }}" class="text-teal-400 hover:underline">Login</a>
+        </p>
     </div>
 </div>
 
 <script>
-    // ===== JavaScript for OTP steps (same as before) =====
-    (function() {
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const regEmail = document.getElementById('reg-email');
-        const regOtp = document.getElementById('reg-otp');
-        const sendOtpBtn = document.getElementById('sendOtpBtn');
-        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-        const emailError = document.getElementById('email-error');
-        const otpError = document.getElementById('otp-error');
-        const verifiedEmailField = document.getElementById('verified-email');
-        const registerForm = document.getElementById('registerForm');
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendOtpBtn = document.getElementById('send-otp-btn');
+        const verifyOtpBtn = document.getElementById('verify-otp-btn');
+        const emailInput = document.getElementById('email');
+        const otpInput = document.getElementById('otp');
+        const otpStatus = document.getElementById('otp-status');
+        const verifyStatus = document.getElementById('verify-status');
 
-        let isOtpVerified = false;
-        let verifiedEmail = '';
-
-        sendOtpBtn.addEventListener('click', async () => {
-            const email = regEmail.value.trim();
-            if (!email || !email.includes('@')) {
-                emailError.textContent = 'Please enter a valid email.';
-                emailError.classList.remove('hidden');
+        // Send OTP
+        sendOtpBtn.addEventListener('click', async function() {
+            const email = emailInput.value.trim();
+            if (!email) {
+                otpStatus.innerHTML = '<span class="text-red-400">Please enter your email.</span>';
                 return;
             }
-            emailError.classList.add('hidden');
-            sendOtpBtn.disabled = true;
-            sendOtpBtn.textContent = 'Sending...';
+            otpStatus.innerHTML = '<span class="text-yellow-400">Sending OTP...</span>';
             try {
-                const res = await fetch("{{ url_for('auth.send_otp') }}", {
+                const response = await fetch('{{ url_for("auth.send_otp") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ email: email })
                 });
-                const data = await res.json();
+                const data = await response.json();
                 if (data.success) {
-                    alert('OTP sent to your email.');
+                    otpStatus.innerHTML = '<span class="text-green-400">OTP sent to your email. Check logs for demo.</span>';
                 } else {
-                    alert(data.message || 'Failed to send OTP.');
+                    otpStatus.innerHTML = `<span class="text-red-400">${data.message}</span>`;
                 }
-            } catch (err) {
-                alert('Network error. Please try again.');
+            } catch (error) {
+                otpStatus.innerHTML = '<span class="text-red-400">Network error. Please try again.</span>';
             }
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.textContent = 'Send OTP';
         });
 
-        verifyOtpBtn.addEventListener('click', async () => {
-            const email = regEmail.value.trim();
-            const otp = regOtp.value.trim();
+        // Verify OTP
+        verifyOtpBtn.addEventListener('click', async function() {
+            const email = emailInput.value.trim();
+            const otp = otpInput.value.trim();
             if (!email || !otp) {
-                otpError.textContent = 'Email and OTP are required.';
-                otpError.classList.remove('hidden');
+                verifyStatus.innerHTML = '<span class="text-red-400">Please enter email and OTP.</span>';
                 return;
             }
-            otpError.classList.add('hidden');
-            verifyOtpBtn.disabled = true;
-            verifyOtpBtn.textContent = 'Verifying...';
+            verifyStatus.innerHTML = '<span class="text-yellow-400">Verifying...</span>';
             try {
-                const res = await fetch("{{ url_for('auth.verify_otp') }}", {
+                const response = await fetch('{{ url_for("auth.verify_otp") }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, otp })
+                    body: JSON.stringify({ email: email, otp: otp })
                 });
-                const data = await res.json();
+                const data = await response.json();
                 if (data.success) {
-                    verifiedEmail = email;
-                    isOtpVerified = true;
-                    verifiedEmailField.value = email;
-                    step1.classList.add('hidden');
-                    step2.classList.remove('hidden');
-                    alert('Email verified! Complete registration.');
+                    verifyStatus.innerHTML = '<span class="text-green-400">OTP verified! You can now register.</span>';
                 } else {
-                    alert(data.message || 'Invalid or expired OTP.');
+                    verifyStatus.innerHTML = `<span class="text-red-400">${data.message}</span>`;
                 }
-            } catch (err) {
-                alert('Network error. Please try again.');
-            }
-            verifyOtpBtn.disabled = false;
-            verifyOtpBtn.textContent = 'Verify';
-        });
-
-        // Prevent form submission if email not verified
-        registerForm.addEventListener('submit', function(e) {
-            if (!isOtpVerified) {
-                e.preventDefault();
-                alert('Please verify your email first.');
+            } catch (error) {
+                verifyStatus.innerHTML = '<span class="text-red-400">Network error. Please try again.</span>';
             }
         });
-    })();
+    });
 </script>
-
 {% endblock %}
