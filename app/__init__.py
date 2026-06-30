@@ -43,8 +43,7 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register blueprints
-    from app.routes import main
+    # Register blueprintsfrom app.routes.main import main_bp as main
     from app.routes.auth import auth_bp
     from app.routes.patient import patient_bp
     from app.routes.doctor import doctor_bp
