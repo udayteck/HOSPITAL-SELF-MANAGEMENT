@@ -5,14 +5,22 @@
     <!-- Header -->
     <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
         <h1 class="text-3xl font-bold text-white text-glow">Patient Dashboard</h1>
-        <div class="flex gap-3">
-            <a href="{{ url_for('patient.appointments') }}" class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
+        <div class="flex flex-wrap gap-3">
+            <!-- NEW: Book Appointment Button -->
+            <a href="{{ url_for('patient.book_appointment') }}" 
+               class="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white px-5 py-2.5 rounded-lg transition shadow-lg shadow-teal-500/30 flex items-center gap-2">
+                <i class="fas fa-calendar-plus"></i> Book Appointment
+            </a>
+            <a href="{{ url_for('patient.appointments') }}" 
+               class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
                 <i class="fas fa-calendar-check mr-2"></i> My Appointments
             </a>
-            <a href="{{ url_for('patient.profile') }}" class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
+            <a href="{{ url_for('patient.profile') }}" 
+               class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
                 <i class="fas fa-user mr-2"></i> Profile
             </a>
-            <a href="{{ url_for('patient.bills') }}" class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
+            <a href="{{ url_for('patient.bills') }}" 
+               class="glass px-4 py-2 rounded-lg text-white/80 hover:text-white transition">
                 <i class="fas fa-file-invoice mr-2"></i> Bills
             </a>
         </div>
@@ -55,8 +63,7 @@
         </div>
     </div>
 
-    <!-- Appointments Sections -->
-    <!-- Upcoming -->
+    <!-- Upcoming Appointments -->
     <div class="mb-8">
         <h2 class="text-2xl font-bold text-white text-glow mb-4">Upcoming Appointments</h2>
         <div class="glass rounded-2xl overflow-hidden">
@@ -76,17 +83,20 @@
                         <tr class="border-b border-white/5 hover:bg-white/5 transition">
                             <td class="py-4 px-6">{{ apt.date.strftime('%d/%m/%Y') }}</td>
                             <td class="py-4 px-6">{{ apt.start_time.strftime('%I:%M %p') }}</td>
-                            <td class="py-4 px-6">{{ apt.doctor.full_name }}</td>
+                            <td class="py-4 px-6">Dr. {{ apt.doctor.full_name }}</td>
                             <td class="py-4 px-6">
                                 <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">
                                     {{ apt.status }}
                                 </span>
                             </td>
                             <td class="py-4 px-6">
-                                <a href="{{ url_for('patient.view_appointment', appointment_id=apt.id) }}" class="text-teal-400 hover:text-teal-300">View</a>
-                                <form method="POST" action="{{ url_for('patient.cancel_appointment', appointment_id=apt.id) }}" class="inline">
-                                    <button type="submit" class="text-red-400 hover:text-red-300 ml-3" onclick="return confirm('Cancel this appointment?')">Cancel</button>
+                                <a href="{{ url_for('patient.view_appointment', appointment_id=apt.id) }}" 
+                                   class="text-teal-400 hover:text-teal-300 text-sm">View</a>
+                                {% if apt.status == 'scheduled' %}
+                                <form method="POST" action="{{ url_for('patient.cancel_appointment', appointment_id=apt.id) }}" class="inline ml-3">
+                                    <button type="submit" class="text-red-400 hover:text-red-300 text-sm" onclick="return confirm('Cancel this appointment?')">Cancel</button>
                                 </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
@@ -118,7 +128,7 @@
                         <tr class="border-b border-white/5 hover:bg-white/5 transition">
                             <td class="py-4 px-6">{{ apt.date.strftime('%d/%m/%Y') }}</td>
                             <td class="py-4 px-6">{{ apt.start_time.strftime('%I:%M %p') }}</td>
-                            <td class="py-4 px-6">{{ apt.doctor.full_name }}</td>
+                            <td class="py-4 px-6">Dr. {{ apt.doctor.full_name }}</td>
                             <td class="py-4 px-6">
                                 <span class="px-3 py-1 rounded-full text-xs font-medium 
                                            {% if apt.status == 'completed' %}bg-green-500/20 text-green-300
@@ -128,7 +138,8 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6">
-                                <a href="{{ url_for('patient.view_appointment', appointment_id=apt.id) }}" class="text-teal-400 hover:text-teal-300">View</a>
+                                <a href="{{ url_for('patient.view_appointment', appointment_id=apt.id) }}" 
+                                   class="text-teal-400 hover:text-teal-300 text-sm">View</a>
                             </td>
                         </tr>
                         {% else %}
