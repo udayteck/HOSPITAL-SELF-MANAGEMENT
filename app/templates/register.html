@@ -94,13 +94,14 @@
                     body: JSON.stringify({ email: email })
                 });
                 const data = await response.json();
-                if (data.success) {
-                    otpStatus.innerHTML = '<span class="text-green-400">OTP sent to your email. Check logs for demo.</span>';
+                if (response.ok && data.success) {
+                    otpStatus.innerHTML = '<span class="text-green-400">' + data.message + '</span>';
                 } else {
-                    otpStatus.innerHTML = `<span class="text-red-400">${data.message}</span>`;
+                    otpStatus.innerHTML = '<span class="text-red-400">' + (data.message || 'Error sending OTP.') + '</span>';
                 }
             } catch (error) {
                 otpStatus.innerHTML = '<span class="text-red-400">Network error. Please try again.</span>';
+                console.error('Fetch error:', error);
             }
         });
 
@@ -120,13 +121,14 @@
                     body: JSON.stringify({ email: email, otp: otp })
                 });
                 const data = await response.json();
-                if (data.success) {
-                    verifyStatus.innerHTML = '<span class="text-green-400">OTP verified! You can now register.</span>';
+                if (response.ok && data.success) {
+                    verifyStatus.innerHTML = '<span class="text-green-400">' + data.message + '</span>';
                 } else {
-                    verifyStatus.innerHTML = `<span class="text-red-400">${data.message}</span>`;
+                    verifyStatus.innerHTML = '<span class="text-red-400">' + (data.message || 'Verification failed.') + '</span>';
                 }
             } catch (error) {
                 verifyStatus.innerHTML = '<span class="text-red-400">Network error. Please try again.</span>';
+                console.error('Fetch error:', error);
             }
         });
     });

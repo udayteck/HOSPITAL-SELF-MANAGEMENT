@@ -25,32 +25,37 @@ def send_otp():
         otp = EmailVerification.create_otp(email)
         print(f"✅ OTP generated for {email}: {otp}")  # fallback debug in logs
 
-        # Send email
-        msg = Message(
-            subject="Your OTP for SKD Hospital Registration",
-            sender=current_app.config['MAIL_DEFAULT_SENDER'],
-            recipients=[email]
-        )
-        msg.html = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; background: #0a0e1a; color: #fff; padding: 20px;">
-            <div style="max-width: 500px; margin: auto; background: #1a1a2e; padding: 30px; border-radius: 12px; border: 1px solid #00ccb0;">
-                <h1 style="color: #00ccb0; text-align: center;">SKD Hospital</h1>
-                <p style="color: #ccc;">Your OTP for registration is:</p>
-                <h2 style="color: #00ccb0; font-size: 36px; text-align: center; letter-spacing: 4px;">{otp}</h2>
-                <p style="color: #999; text-align: center;">This OTP is valid for 10 minutes.</p>
-                <p style="color: #666; text-align: center; font-size: 12px;">If you didn't request this, please ignore.</p>
-            </div>
-        </body>
-        </html>
-        """
+        # Attempt to send email
+        try:
+            msg = Message(
+                subject="Your OTP for SKD Hospital Registration",
+                sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                recipients=[email]
+            )
+            msg.html = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; background: #0a0e1a; color: #fff; padding: 20px;">
+                <div style="max-width: 500px; margin: auto; background: #1a1a2e; padding: 30px; border-radius: 12px; border: 1px solid #00ccb0;">
+                    <h1 style="color: #00ccb0; text-align: center;">SKD Hospital</h1>
+                    <p style="color: #ccc;">Your OTP for registration is:</p>
+                    <h2 style="color: #00ccb0; font-size: 36px; text-align: center; letter-spacing: 4px;">{otp}</h2>
+                    <p style="color: #999; text-align: center;">This OTP is valid for 10 minutes.</p>
+                    <p style="color: #666; text-align: center; font-size: 12px;">If you didn't request this, please ignore.</p>
+                </div>
+            </body>
+            </html>
+            """
+            mail.send(msg)
+            return jsonify({'success': True, 'message': 'OTP sent to your email'})
 
-        mail.send(msg)
-        return jsonify({'success': True, 'message': 'OTP sent to your email'})
+        except Exception as mail_error:
+            print(f"❌ Email send failed: {mail_error}")
+            # Return an error that the frontend will display
+            return jsonify({'success': False, 'message': f'OTP generated but email could not be sent. Check email configuration.'}), 500
 
     except Exception as e:
-        print(f"❌ Failed to send OTP: {e}")
-        return jsonify({'success': False, 'message': 'Failed to send OTP. Please try again.'}), 500
+        print(f"❌ OTP generation failed: {e}")
+        return jsonify({'success': False, 'message': 'Failed to generate OTP. Please try again.'}), 500
 
 
 # ==================== VERIFY OTP ====================
