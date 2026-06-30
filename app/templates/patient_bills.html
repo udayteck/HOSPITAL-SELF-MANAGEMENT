@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white text-glow mb-6">My Bills</h1>
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Bill #</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Amount</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Status</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6">{{ bill.bill_number or bill.id }}</td>
+                        <td class="py-4 px-6 font-semibold">₹{{ "%.2f"|format(bill.amount) }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                       {% if bill.status == 'paid' %}bg-green-500/20 text-green-300
+                                       {% elif bill.status == 'pending' %}bg-yellow-500/20 text-yellow-300
+                                       {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                {{ bill.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-4 px-6">
+                            {% if bill.status != 'paid' %}
+                            <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=bill.id) }}" class="inline">
+                                <button type="submit" class="text-green-400 hover:text-green-300 text-sm" onclick="return confirm('Pay this bill?')">
+                                    <i class="fas fa-credit-card mr-1"></i> Pay
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-white/40 text-sm">Paid</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="py-8 text-center text-white/40">No bills found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

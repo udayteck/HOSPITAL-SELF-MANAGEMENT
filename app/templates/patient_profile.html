@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <h1 class="text-3xl font-bold text-white text-glow mb-6">My Profile</h1>
+    <div class="glass p-8 rounded-2xl">
+        <form method="POST" action="{{ url_for('patient.profile') }}" class="space-y-4">
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Full Name</label>
+                <input type="text" name="full_name" value="{{ patient.full_name }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Email</label>
+                <input type="email" value="{{ patient.user.email }}" disabled class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Phone</label>
+                <input type="text" name="phone" value="{{ patient.phone or '' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Date of Birth</label>
+                <input type="date" name="date_of_birth" value="{{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Address</label>
+                <textarea name="address" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">{{ patient.address or '' }}</textarea>
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Emergency Contact</label>
+                <input type="text" name="emergency_contact" value="{{ patient.emergency_contact or '' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Blood Group</label>
+                <input type="text" name="blood_group" value="{{ patient.blood_group or '' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Allergies</label>
+                <input type="text" name="allergies" value="{{ patient.allergies or '' }}" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+            </div>
+            <div>
+                <label class="block text-white/80 text-sm font-medium mb-1">Medical History</label>
+                <textarea name="medical_history" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">{{ patient.medical_history or '' }}</textarea>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30">
+                Update Profile
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
