@@ -4,6 +4,11 @@ from app.models import User, GlobalSetting
 
 app = create_app()
 
+# ---------- DEBUG: Check email environment variables ----------
+print(f"📧 MAIL_USERNAME: {os.environ.get('MAIL_USERNAME')}")
+print(f"📧 MAIL_PASSWORD set: {bool(os.environ.get('MAIL_PASSWORD'))}")
+# --------------------------------------------------------------
+
 # ---------- FORCE RAILWAY DATABASE ----------
 # Override any hardcoded value with the environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
