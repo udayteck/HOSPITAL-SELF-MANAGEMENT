@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 
 db = SQLAlchemy()
 
@@ -214,3 +214,17 @@ class GlobalSetting(db.Model):
 
     def __repr__(self):
         return f'<GlobalSetting {self.key}={self.value}>'
+
+
+# ---------- Email Verification ----------
+class EmailVerification(db.Model):
+    __tablename__ = 'email_verifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    otp = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(minutes=10))
+
+    def __repr__(self):
+        return f'<EmailVerification {self.email}>'
