@@ -2,57 +2,87 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8 max-w-2xl">
-    <div class="glass p-8 rounded-2xl">
-        <h1 class="text-3xl font-bold text-white text-glow mb-4">{{ title or 'Generate New Bill' }}</h1>
+    <div class="glass p-8 rounded-2xl shadow-2xl">
+        
+        <!-- Dynamic Title -->
+        {% if bill %}
+            <h1 class="text-3xl font-bold text-white text-glow mb-4">
+                <i class="fas fa-pen text-teal-400 mr-2"></i> Edit Bill #{{ bill.bill_number or bill.id }}
+            </h1>
+        {% else %}
+            <h1 class="text-3xl font-bold text-white text-glow mb-4">
+                <i class="fas fa-plus-circle text-teal-400 mr-2"></i> Generate New Bill - Receptionist
+            </h1>
+        {% endif %}
 
-        <form method="POST" class="space-y-4">
-            <!-- Patient -->
+        <form method="POST" class="space-y-5">
+            {% csrf_token %} <!-- Add if using Django, otherwise remove -->
+
+            <!-- 1. Patient -->
             <div>
-                <label for="patient_id" class="block text-white/80 text-sm font-medium mb-1">Patient</label>
-                <select name="patient_id" id="patient_id" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <label class="block text-white/80 text-sm font-medium mb-1.5">
+                    <i class="fas fa-user text-teal-400 mr-1"></i> Patient
+                </label>
+                <select name="patient_id" required>
                     <option value="">-- Select Patient --</option>
                     {% for patient in patients %}
-                    <option value="{{ patient.id }}" class="bg-gray-800">{{ patient.full_name }}</option>
+                        <option value="{{ patient.id }}" {% if bill and patient.id == bill.patient_id %}selected{% endif %}>
+                            {{ patient.full_name }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- Appointment -->
+            <!-- 2. Appointment -->
             <div>
-                <label for="appointment_id" class="block text-white/80 text-sm font-medium mb-1">Appointment (optional)</label>
-                <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <label class="block text-white/80 text-sm font-medium mb-1.5">
+                    <i class="fas fa-calendar-check text-teal-400 mr-1"></i> Appointment (optional)
+                </label>
+                <select name="appointment_id">
                     <option value="">-- None --</option>
                     {% for apt in appointments %}
-                    <option value="{{ apt.id }}">{{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}</option>
+                        <option value="{{ apt.id }}" {% if bill and apt.id == bill.appointment_id %}selected{% endif %}>
+                            Dr. {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- Amount -->
+            <!-- 3. Amount -->
             <div>
-                <label for="amount" class="block text-white/80 text-sm font-medium mb-1">Amount (₹)</label>
-                <input type="number" step="0.01" name="amount" id="amount" required min="0"
-                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <label class="block text-white/80 text-sm font-medium mb-1.5">
+                    <i class="fas fa-indian-rupee-sign text-teal-400 mr-1"></i> Amount (₹)
+                </label>
+                <input type="number" step="0.01" name="amount" required min="0" 
+                       value="{{ bill.amount if bill else '' }}" 
+                       placeholder="0.00" />
             </div>
 
-            <!-- Items / Description -->
+            <!-- 4. Description -->
             <div>
-                <label for="items" class="block text-white/80 text-sm font-medium mb-1">Description / Items</label>
-                <textarea name="items" id="items" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400" placeholder="e.g. Consultation, Lab tests, etc."></textarea>
+                <label class="block text-white/80 text-sm font-medium mb-1.5">
+                    <i class="fas fa-list text-teal-400 mr-1"></i> Description / Items
+                </label>
+                <textarea name="items" rows="3" placeholder="e.g. Consultation, Lab tests, etc.">{{ bill.items if bill else '' }}</textarea>
             </div>
 
-            <!-- Status -->
+            <!-- 5. Status -->
             <div>
-                <label for="status" class="block text-white/80 text-sm font-medium mb-1">Status</label>
-                <select name="status" id="status" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
-                    <option value="Pending">Pending</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Overdue">Overdue</option>
+                <label class="block text-white/80 text-sm font-medium mb-1.5">
+                    <i class="fas fa-circle text-teal-400 mr-1"></i> Status
+                </label>
+                <select name="status">
+                    <option value="Pending" {% if bill and bill.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Paid" {% if bill and bill.status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Overdue" {% if bill and bill.status == 'Overdue' %}selected{% endif %}>Overdue</option>
                 </select>
             </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30">
-                <i class="fas fa-file-invoice mr-2"></i> Generate Bill
+            <!-- 6. Submit Button -->
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3.5 rounded-lg transition duration-300 shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2 text-lg">
+                <i class="fas fa-save"></i> 
+                {% if bill %}Update Bill{% else %}Generate Bill{% endif %}
             </button>
         </form>
     </div>

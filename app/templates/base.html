@@ -4,11 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{% block title %}SKD Hospital System{% endblock %}</title>
+
+    <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 2. Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <!-- 3. Font Awesome (fixes 404) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- 4. MAIN STYLES (Liquid Glass + Dark Fixes) -->
     <style>
-        /* ===== LIQUID GLASS ===== */
+        /* ===== LIQUID GLASS (from your second file) ===== */
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -69,7 +77,7 @@
         }
         .text-glow { text-shadow: 0 0 30px rgba(0,255,230,0.15); }
 
-        /* ----- Floating vitals ----- */
+        /* ----- Floating vitals & icons (unchanged) ----- */
         .vital-sign {
             position: fixed;
             font-family: 'Inter', monospace;
@@ -117,7 +125,6 @@
             100% { transform: translate(15px, -25px) scale(1); opacity: 0.25; }
         }
 
-        /* ----- Floating icons ----- */
         .floating-icon {
             position: fixed;
             font-size: 2.8rem;
@@ -167,12 +174,76 @@
         ::-webkit-scrollbar-track { background:rgba(0,0,0,0.2); }
         ::-webkit-scrollbar-thumb { background:rgba(0,255,230,0.3); border-radius:4px; }
         ::-webkit-scrollbar-thumb:hover { background:rgba(0,255,230,0.5); }
+
+        /* ==============================================
+           ✅ DARK FIXES FOR DROPDOWNS, INPUTS, TEXTAREAS
+           (merged from your first base.html with !important)
+        ============================================== */
+        /* --- Fix the CLOSED Dropdown Box --- */
+        select {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px !important;
+            padding: 12px 16px !important;
+            width: 100% !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            /* White dropdown arrow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 16px center !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+        }
+
+        /* --- Fix the DROPDOWN OPTIONS (The list that pops down) --- */
+        select option {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            padding: 10px 16px !important;
+        }
+        /* Hover and Selected state (Teal accent) */
+        select option:hover,
+        select option:checked {
+            background-color: #0d9488 !important;
+            color: #ffffff !important;
+        }
+
+        /* --- Fix Inputs and Textareas to match --- */
+        input, textarea {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px !important;
+            padding: 12px 16px !important;
+            width: 100% !important;
+            outline: none !important;
+            font-size: 16px !important;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #14b8a6 !important;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2) !important;
+        }
+
+        /* --- Fix Placeholder text color --- */
+        ::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1 !important;
+        }
+
+        /* --- Fix for Firefox weirdness --- */
+        select:-moz-focusring {
+            color: transparent !important;
+            text-shadow: 0 0 0 #ffffff !important;
+        }
     </style>
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <!-- Background layers -->
+    <!-- Background layers (liquid, orbs, wave, ECG) -->
     <div class="liquid-bg"></div>
     <div class="glass-orb"></div>
     <div class="glass-orb"></div>
@@ -262,15 +333,6 @@
                             <a href="{{ url_for('auth.logout') }}" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 px-3 py-1.5 rounded-lg transition text-sm font-medium">
                                 <i class="fas fa-sign-out-alt mr-1"></i> Logout
                             </a>
-                            <!-- Optional dropdown for extras -->
-                            <div class="relative group">
-                                <button class="text-white/80 hover:text-white focus:outline-none transition-smooth">
-                                    <i class="fas fa-chevron-down text-xs"></i>
-                                </button>
-                                <div class="dropdown-menu absolute right-0 w-48 rounded-xl shadow-xl py-1 mt-2 hidden group-hover:block transition-all duration-200 z-10">
-                                    <!-- you can add extra links here if needed -->
-                                </div>
-                            </div>
                         {% else %}
                             <a href="{{ url_for('auth.login') }}" class="text-white/80 hover:text-white font-medium transition-smooth">Login</a>
                             <a href="{{ url_for('auth.register') }}" class="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white px-5 py-2 rounded-full font-medium shadow-lg shadow-teal-500/20 transition-all duration-300">Register</a>
@@ -335,6 +397,7 @@
         </footer>
     </div>
 
+    <!-- ECG & Mobile Menu Script (unchanged) -->
     <script>
         // ECG Animation
         (function() {
