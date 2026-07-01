@@ -16,7 +16,7 @@
         {% endif %}
 
         <form method="POST" class="space-y-5">
-            {% csrf_token %} <!-- Add if using Django, otherwise remove -->
+            <!-- ✅ CSRF token removed – not needed in Flask without WTForms -->
 
             <!-- 1. Patient -->
             <div>
