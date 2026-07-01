@@ -421,7 +421,7 @@ def edit_bill(bill_id):
     if request.method == 'GET':
         patients = Patient.query.all()
         appointments = Appointment.query.filter_by(status='scheduled').all()
-        return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
+        return render_template('bill_form.html', bill=bill, patients=patients, appointments=appointments)
 
     # POST update
     patient_id = request.form.get('patient_id')
