@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_mail import Message
-from app.extensions import db, mail
+from app.extensions import db
 from app.models import User, Patient, Doctor, EmailVerification
+from app.email_helper import send_html_email, build_skd_email_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import re
@@ -23,39 +23,29 @@ def send_otp():
 
     try:
         otp = EmailVerification.create_otp(email)
-        print(f"✅ OTP generated for {email}: {otp}")  # fallback debug in logs
+        print(f"✅ OTP generated for {email}: {otp}")
 
-        # Attempt to send email
-        try:
-            msg = Message(
-                subject="Your OTP for SKD Hospital Registration",
-                sender=current_app.config['MAIL_DEFAULT_SENDER'],
-                recipients=[email]
-            )
-            msg.html = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; background: #0a0e1a; color: #fff; padding: 20px;">
-                <div style="max-width: 500px; margin: auto; background: #1a1a2e; padding: 30px; border-radius: 12px; border: 1px solid #00ccb0;">
-                    <h1 style="color: #00ccb0; text-align: center;">SKD Hospital</h1>
-                    <p style="color: #ccc;">Your OTP for registration is:</p>
-                    <h2 style="color: #00ccb0; font-size: 36px; text-align: center; letter-spacing: 4px;">{otp}</h2>
-                    <p style="color: #999; text-align: center;">This OTP is valid for 10 minutes.</p>
-                    <p style="color: #666; text-align: center; font-size: 12px;">If you didn't request this, please ignore.</p>
-                </div>
-            </body>
-            </html>
+        # Send OTP via Brevo
+        subject = "Your OTP for SKD Hospital Registration"
+        html_content = build_skd_email_template(
+            title="OTP Verification",
+            greeting_text=f"Dear {email},",
+            main_content=f"""
+            <p>Your OTP for registration is:</p>
+            <h2 style="color: #00ccb0; font-size: 36px; text-align: center; letter-spacing: 4px;">{otp}</h2>
+            <p>This OTP is valid for 10 minutes.</p>
+            <p>If you didn't request this, please ignore.</p>
             """
-            mail.send(msg)
+        )
+        success = send_html_email(email, subject, html_content)
+        if success:
             return jsonify({'success': True, 'message': 'OTP sent to your email'})
-
-        except Exception as mail_error:
-            print(f"❌ Email send failed: {mail_error}")
-            # Return an error that the frontend will display
-            return jsonify({'success': False, 'message': f'OTP generated but email could not be sent. Check email configuration.'}), 500
+        else:
+            return jsonify({'success': False, 'message': 'Failed to send OTP. Please try again.'}), 500
 
     except Exception as e:
-        print(f"❌ OTP generation failed: {e}")
-        return jsonify({'success': False, 'message': 'Failed to generate OTP. Please try again.'}), 500
+        print(f"❌ OTP error: {e}")
+        return jsonify({'success': False, 'message': 'Failed to generate or send OTP.'}), 500
 
 
 # ==================== VERIFY OTP ====================
