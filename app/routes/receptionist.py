@@ -221,7 +221,7 @@ def generate_bill():
             patient_id=patient_id,
             appointment_id=appointment_id if appointment_id else None,
             amount=amount,
-            items=items,
+            description=items,
             status=status,
            # created_by=current_user.id
         )
