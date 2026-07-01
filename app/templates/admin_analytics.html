@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white text-glow mb-6">📊 Analytics Dashboard</h1>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass p-6 rounded-2xl">
+            <p class="text-white/60 text-sm">Total Users</p>
+            <p class="text-3xl font-bold text-white">{{ total_users }}</p>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <p class="text-white/60 text-sm">Patients</p>
+            <p class="text-3xl font-bold text-white">{{ total_patients }}</p>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <p class="text-white/60 text-sm">Appointments</p>
+            <p class="text-3xl font-bold text-white">{{ total_appointments }}</p>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <p class="text-white/60 text-sm">Revenue</p>
+            <p class="text-3xl font-bold text-teal-300">₹{{ "%.2f"|format(total_revenue) }}</p>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Appointment Status (Doughnut) -->
+        <div class="glass p-6 rounded-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Appointment Status</h2>
+            <canvas id="statusChart" height="200"></canvas>
+        </div>
+        <!-- Monthly Appointments (Bar) -->
+        <div class="glass p-6 rounded-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Monthly Appointments</h2>
+            <canvas id="appointmentsChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue Chart -->
+    <div class="glass p-6 rounded-2xl mb-8">
+        <h2 class="text-xl font-semibold text-white mb-4">Monthly Revenue</h2>
+        <canvas id="revenueChart" height="100"></canvas>
+    </div>
+
+    <!-- Top Doctors & Recent Appointments -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Doctors -->
+        <div class="glass p-6 rounded-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Top Doctors (by Appointments)</h2>
+            <ul class="space-y-2">
+                {% for doc in top_doctors_data %}
+                <li class="flex justify-between items-center border-b border-white/10 py-2">
+                    <span class="text-white/80">{{ doc.name }}</span>
+                    <span class="text-teal-300 font-bold">{{ doc.count }}</span>
+                </li>
+                {% else %}
+                <li class="text-white/40">No data available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Recent Appointments -->
+        <div class="glass p-6 rounded-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Recent Appointments</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-white text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-2 px-3">ID</th>
+                            <th class="text-left py-2 px-3">Patient</th>
+                            <th class="text-left py-2 px-3">Doctor</th>
+                            <th class="text-left py-2 px-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for apt in recent_appointments %}
+                        <tr class="border-b border-white/5">
+                            <td class="py-2 px-3 font-mono">{{ apt.reference }}</td>
+                            <td class="py-2 px-3">{{ apt.patient.full_name }}</td>
+                            <td class="py-2 px-3">Dr. {{ apt.doctor.full_name }}</td>
+                            <td class="py-2 px-3">
+                                <span class="px-2 py-1 rounded-full text-xs 
+                                    {% if apt.status == 'scheduled' %}bg-green-500/20 text-green-300
+                                    {% elif apt.status == 'completed' %}bg-blue-500/20 text-blue-300
+                                    {% elif apt.status == 'pending' %}bg-yellow-500/20 text-yellow-300
+                                    {% else %}bg-red-500/20 text-red-300{% endif %}">
+                                    {{ apt.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="py-4 text-center text-white/40">No recent appointments.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data as JSON (no template tags inside main script) -->
+<script id="chartData" type="application/json">
+{
+    "statusData": {
+        "scheduled": {{ status_data.get('scheduled', 0) }},
+        "completed": {{ status_data.get('completed', 0) }},
+        "pending": {{ status_data.get('pending', 0) }},
+        "cancelled": {{ status_data.get('cancelled', 0) }}
+    },
+    "monthlyLabels": {{ monthly_labels|tojson|safe }},
+    "monthlyAppointments": {{ monthly_appointments|tojson|safe }},
+    "monthlyRevenue": {{ monthly_revenue|tojson|safe }}
+}
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse the data from the JSON script tag
+        var data = JSON.parse(document.getElementById('chartData').textContent);
+
+        // Status Chart (Doughnut)
+        var statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Scheduled', 'Completed', 'Pending', 'Cancelled'],
+                datasets: [{
+                    data: [
+                        data.statusData.scheduled,
+                        data.statusData.completed,
+                        data.statusData.pending,
+                        data.statusData.cancelled
+                    ],
+                    backgroundColor: ['#00ccb0', '#34d399', '#fbbf24', '#f87171'],
+                    borderColor: 'transparent'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                }
+            }
+        });
+
+        // Monthly Appointments (Bar)
+        var apptCtx = document.getElementById('appointmentsChart').getContext('2d');
+        new Chart(apptCtx, {
+            type: 'bar',
+            data: {
+                labels: data.monthlyLabels,
+                datasets: [{
+                    label: 'Appointments',
+                    data: data.monthlyAppointments,
+                    backgroundColor: 'rgba(0, 206, 176, 0.6)',
+                    borderColor: '#00ccb0',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#ccc' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#ccc' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Monthly Revenue (Line)
+        var revCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: data.monthlyLabels,
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: data.monthlyRevenue,
+                    borderColor: '#00ccb0',
+                    backgroundColor: 'rgba(0, 206, 176, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#ccc', callback: function(value) { return '₹' + value.toFixed(0); } },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#ccc' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

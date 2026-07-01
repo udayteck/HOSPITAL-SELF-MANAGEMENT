@@ -19,7 +19,7 @@
 
 <h1 class="text-2xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
 
-<!-- Quick Action Cards (Navigation) - 5 cards now -->
+<!-- Quick Action Cards (Navigation) - 5 cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
     <a href="{{ url_for('admin.manage_doctors') }}" class="action-card bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg shadow p-5 text-white hover:shadow-lg transition">
         <div class="flex items-center justify-between">
@@ -57,7 +57,6 @@
             </div>
         </div>
     </a>
-    <!-- NEW: Accounts & Bills Card -->
     <a href="{{ url_for('admin.manage_bills') }}" class="action-card bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-5 text-white hover:shadow-lg transition">
         <div class="flex items-center justify-between">
             <div><i class="fas fa-file-invoice-dollar text-3xl"></i></div>
@@ -69,7 +68,15 @@
     </a>
 </div>
 
-<!-- Statistics Cards (Overview Counts) -->
+<!-- Analytics Link -->
+<div class="mb-8">
+    <a href="{{ url_for('admin.analytics') }}" class="glass p-6 rounded-2xl hover:bg-white/5 transition text-center block">
+        <i class="fas fa-chart-line text-4xl text-teal-300 mb-2"></i>
+        <p class="text-white font-medium">View Analytics</p>
+    </a>
+</div>
+
+<!-- Statistics Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="stat-card bg-white rounded-lg shadow p-5 border-l-4 border-teal-500">
         <div class="flex items-center justify-between">
@@ -109,7 +116,7 @@
     </div>
 </div>
 
-<!-- Hospital Accounts / Appointment Stats -->
+<!-- Appointment Stats -->
 <div class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-xl font-semibold text-gray-800 mb-4">Hospital Accounts Summary</h2>
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
@@ -124,32 +131,43 @@
     </div>
 </div>
 
-<!-- Charts (Appointments last 7 days) - REDUCED SIZE -->
+<!-- Chart -->
 <div class="bg-white rounded-lg shadow p-6 mb-8">
     <h2 class="text-xl font-semibold text-gray-800 mb-4">Appointments (Last 7 Days)</h2>
     <canvas id="appointmentsChart" style="max-height: 250px; width: 100%;"></canvas>
 </div>
 
+<!-- Data as JSON -->
+<script id="chartData" type="application/json">
+{
+    "labels": {{ last_7_days|tojson|safe }},
+    "data": {{ appointments_per_day|tojson|safe }}
+}
+</script>
+
 <script>
-    const ctx = document.getElementById('appointmentsChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {{ last_7_days|tojson }},
-            datasets: [{
-                label: 'Appointments',
-                data: {{ appointments_per_day|tojson }},
-                borderColor: '#14b8a6',
-                backgroundColor: 'rgba(20, 184, 166, 0.1)',
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { position: 'top' } }
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        var chartData = JSON.parse(document.getElementById('chartData').textContent);
+        var ctx = document.getElementById('appointmentsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Appointments',
+                    data: chartData.data,
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'top' } }
+            }
+        });
     });
 </script>
 
