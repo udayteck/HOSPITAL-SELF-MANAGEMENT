@@ -68,59 +68,88 @@
             border-top: 1px solid rgba(0,255,230,0.08);
         }
         .text-glow { text-shadow: 0 0 30px rgba(0,255,230,0.15); }
+
+        /* ----- Floating vitals ----- */
         .vital-sign {
-            position: fixed; font-family: 'Inter', monospace; color: rgba(0,255,230,0.35);
-            pointer-events:none; z-index:2; font-weight:300; letter-spacing:1px;
+            position: fixed;
+            font-family: 'Inter', monospace;
+            color: rgba(0, 255, 230, 0.35);
+            pointer-events: none;
+            z-index: 2;
+            font-weight: 300;
+            letter-spacing: 1px;
             animation: floatVital 22s infinite ease-in-out;
-            text-shadow: 0 0 30px rgba(0,255,230,0.12);
+            text-shadow: 0 0 30px rgba(0, 255, 230, 0.12);
             backdrop-filter: blur(4px);
-            padding:6px 12px; border-radius:12px;
-            background: rgba(0,0,0,0.1);
-            border:1px solid rgba(0,255,230,0.05);
+            padding: 6px 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 255, 230, 0.05);
         }
-        .vital-sign .label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; opacity:0.5; }
-        .vital-sign .value { font-size:2rem; font-weight:600; line-height:1.2; }
-        .vital-sign .unit { font-size:0.7rem; opacity:0.5; margin-left:2px; }
-        .vital-sign:nth-child(1) { top:12%; left:5%; animation-delay:0s; }
-        .vital-sign:nth-child(2) { top:28%; right:6%; animation-delay:-5s; }
-        .vital-sign:nth-child(3) { bottom:22%; left:8%; animation-delay:-10s; }
-        .vital-sign:nth-child(4) { bottom:35%; right:5%; animation-delay:-15s; }
-        .vital-sign:nth-child(5) { top:50%; left:3%; animation-delay:-3s; }
-        .vital-sign:nth-child(6) { top:8%; right:20%; animation-delay:-7s; }
+        .vital-sign .label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.5;
+        }
+        .vital-sign .value {
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .vital-sign .unit {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            margin-left: 2px;
+        }
+        .vital-sign:nth-child(1) { top: 12%; left: 5%; animation-delay: 0s; }
+        .vital-sign:nth-child(2) { top: 28%; right: 6%; animation-delay: -5s; }
+        .vital-sign:nth-child(3) { bottom: 22%; left: 8%; animation-delay: -10s; }
+        .vital-sign:nth-child(4) { bottom: 35%; right: 5%; animation-delay: -15s; }
+        .vital-sign:nth-child(5) { top: 50%; left: 3%; animation-delay: -3s; }
+        .vital-sign:nth-child(6) { top: 8%; right: 20%; animation-delay: -7s; }
+
         @keyframes floatVital {
-            0% { transform:translate(0,0) scale(1); opacity:0.25; }
-            25% { transform:translate(-25px,-35px) scale(1.03); opacity:0.5; }
-            50% { transform:translate(30px,25px) scale(0.97); opacity:0.3; }
-            75% { transform:translate(-20px,40px) scale(1.01); opacity:0.45; }
-            100% { transform:translate(15px,-25px) scale(1); opacity:0.25; }
+            0% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+            25% { transform: translate(-25px, -35px) scale(1.03); opacity: 0.5; }
+            50% { transform: translate(30px, 25px) scale(0.97); opacity: 0.3; }
+            75% { transform: translate(-20px, 40px) scale(1.01); opacity: 0.45; }
+            100% { transform: translate(15px, -25px) scale(1); opacity: 0.25; }
         }
+
+        /* ----- Floating icons ----- */
         .floating-icon {
-            position: fixed; font-size:2.8rem; color:rgba(255,255,255,0.08);
-            pointer-events:none; z-index:2;
+            position: fixed;
+            font-size: 2.8rem;
+            color: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+            z-index: 2;
             animation: floatIcon 26s infinite ease-in-out;
-            text-shadow:0 0 40px rgba(0,255,230,0.08);
-            filter: drop-shadow(0 0 15px rgba(0,200,255,0.06));
-            opacity:0.6;
+            text-shadow: 0 0 40px rgba(0, 255, 230, 0.08);
+            filter: drop-shadow(0 0 15px rgba(0, 200, 255, 0.06));
+            opacity: 0.6;
         }
-        .floating-icon:nth-child(7) { top:15%; left:4%; animation-delay:0s; font-size:4.5rem; }
-        .floating-icon:nth-child(8) { top:70%; left:88%; animation-delay:-4s; font-size:5rem; }
-        .floating-icon:nth-child(9) { top:40%; left:92%; animation-delay:-8s; font-size:3.8rem; }
-        .floating-icon:nth-child(10) { top:85%; left:10%; animation-delay:-12s; font-size:4.2rem; }
-        .floating-icon:nth-child(11) { top:25%; left:68%; animation-delay:-16s; font-size:3.4rem; }
-        .floating-icon:nth-child(12) { top:55%; left:22%; animation-delay:-20s; font-size:4.8rem; }
-        .floating-icon:nth-child(13) { top:10%; left:80%; animation-delay:-2s; font-size:3.6rem; }
-        .floating-icon:nth-child(14) { top:48%; left:8%; animation-delay:-6s; font-size:3.2rem; }
-        .floating-icon:nth-child(15) { top:90%; left:52%; animation-delay:-10s; font-size:4rem; }
-        .floating-icon:nth-child(16) { top:6%; left:38%; animation-delay:-14s; font-size:3rem; }
-        .floating-icon:nth-child(17) { top:62%; left:76%; animation-delay:-18s; font-size:3.5rem; }
-        .floating-icon:nth-child(18) { top:30%; left:32%; animation-delay:-22s; font-size:2.8rem; }
+        .floating-icon:nth-child(7) { top: 15%; left: 4%; animation-delay: 0s; font-size: 4.5rem; }
+        .floating-icon:nth-child(8) { top: 70%; left: 88%; animation-delay: -4s; font-size: 5rem; }
+        .floating-icon:nth-child(9) { top: 40%; left: 92%; animation-delay: -8s; font-size: 3.8rem; }
+        .floating-icon:nth-child(10) { top: 85%; left: 10%; animation-delay: -12s; font-size: 4.2rem; }
+        .floating-icon:nth-child(11) { top: 25%; left: 68%; animation-delay: -16s; font-size: 3.4rem; }
+        .floating-icon:nth-child(12) { top: 55%; left: 22%; animation-delay: -20s; font-size: 4.8rem; }
+        .floating-icon:nth-child(13) { top: 10%; left: 80%; animation-delay: -2s; font-size: 3.6rem; }
+        .floating-icon:nth-child(14) { top: 48%; left: 8%; animation-delay: -6s; font-size: 3.2rem; }
+        .floating-icon:nth-child(15) { top: 90%; left: 52%; animation-delay: -10s; font-size: 4rem; }
+        .floating-icon:nth-child(16) { top: 6%; left: 38%; animation-delay: -14s; font-size: 3rem; }
+        .floating-icon:nth-child(17) { top: 62%; left: 76%; animation-delay: -18s; font-size: 3.5rem; }
+        .floating-icon:nth-child(18) { top: 30%; left: 32%; animation-delay: -22s; font-size: 2.8rem; }
+
         @keyframes floatIcon {
-            0% { transform:translate(0,0) rotate(0deg) scale(1); opacity:0.3; }
-            25% { transform:translate(45px,-40px) rotate(15deg) scale(1.08); opacity:0.6; }
-            50% { transform:translate(-35px,45px) rotate(-8deg) scale(0.92); opacity:0.4; }
-            75% { transform:translate(55px,25px) rotate(22deg) scale(1.04); opacity:0.7; }
-            100% { transform:translate(-25px,-45px) rotate(-12deg) scale(1); opacity:0.3; }
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 0.3; }
+            25% { transform: translate(45px, -40px) rotate(15deg) scale(1.08); opacity: 0.6; }
+            50% { transform: translate(-35px, 45px) rotate(-8deg) scale(0.92); opacity: 0.4; }
+            75% { transform: translate(55px, 25px) rotate(22deg) scale(1.04); opacity: 0.7; }
+            100% { transform: translate(-25px, -45px) rotate(-12deg) scale(1); opacity: 0.3; }
         }
+
         #ecgCanvas {
             position: fixed; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; opacity:0.85;
         }
@@ -142,6 +171,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
     <!-- Background layers -->
     <div class="liquid-bg"></div>
     <div class="glass-orb"></div>
@@ -176,7 +206,7 @@
     <div class="vital-sign"><div class="label">Temperature</div><div class="value">36.5</div><span class="unit">°C</span></div>
     <div class="vital-sign"><div class="label">ECG Lead</div><div class="value">II</div><span class="unit"></span></div>
 
-    <!-- Floating icons -->
+    <!-- Floating medical icons -->
     <div class="floating-icon"><i class="fas fa-plus-circle"></i></div>
     <div class="floating-icon"><i class="fas fa-stethoscope"></i></div>
     <div class="floating-icon"><i class="fas fa-user-md"></i></div>
@@ -196,7 +226,7 @@
     <div class="floating-icon"><i class="fas fa-ear-listen"></i></div>
 
     <div class="page-wrapper">
-        <!-- Navbar (glass) -->
+        <!-- Navbar -->
         <nav class="glass-nav sticky top-0 z-50">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-16">
@@ -208,23 +238,37 @@
                     </div>
                     <div class="hidden md:flex items-center space-x-6">
                         {% if current_user.is_authenticated %}
+                            <span class="text-white/80 text-sm">
+                                <i class="fas fa-user-circle text-teal-300"></i>
+                                {{ current_user.email.split('@')[0] }}
+                            </span>
+                            {% if current_user.role == 'patient' %}
+                                <a href="{{ url_for('patient.dashboard') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg transition text-sm font-medium">
+                                    <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                                </a>
+                            {% elif current_user.role == 'doctor' %}
+                                <a href="{{ url_for('doctor.dashboard') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg transition text-sm font-medium">
+                                    <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                                </a>
+                            {% elif current_user.role == 'receptionist' %}
+                                <a href="{{ url_for('receptionist.dashboard') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg transition text-sm font-medium">
+                                    <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                                </a>
+                            {% elif current_user.role == 'admin' %}
+                                <a href="{{ url_for('admin.dashboard') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg transition text-sm font-medium">
+                                    <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                                </a>
+                            {% endif %}
+                            <a href="{{ url_for('auth.logout') }}" class="bg-red-500/20 hover:bg-red-500/40 text-red-300 px-3 py-1.5 rounded-lg transition text-sm font-medium">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                            </a>
+                            <!-- Optional dropdown for extras -->
                             <div class="relative group">
-                                <button class="flex items-center space-x-1 text-white/80 hover:text-white focus:outline-none transition-smooth">
-                                    <i class="fas fa-user-circle text-xl text-teal-300"></i>
-                                    <span>{{ current_user.email.split('@')[0] }}</span>
+                                <button class="text-white/80 hover:text-white focus:outline-none transition-smooth">
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </button>
                                 <div class="dropdown-menu absolute right-0 w-48 rounded-xl shadow-xl py-1 mt-2 hidden group-hover:block transition-all duration-200 z-10">
-                                    {% if current_user.role == 'patient' %}
-                                        <a href="{{ url_for('patient.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2 text-teal-300"></i> Dashboard</a>
-                                    {% elif current_user.role == 'doctor' %}
-                                        <a href="{{ url_for('doctor.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2 text-teal-300"></i> Dashboard</a>
-                                    {% elif current_user.role == 'receptionist' %}
-                                        <a href="{{ url_for('receptionist.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2 text-teal-300"></i> Dashboard</a>
-                                    {% elif current_user.role == 'admin' %}
-                                        <a href="{{ url_for('admin.dashboard') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-tachometer-alt mr-2 text-teal-300"></i> Dashboard</a>
-                                    {% endif %}
-                                    <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-white hover:bg-white/10"><i class="fas fa-sign-out-alt mr-2 text-red-300"></i> Logout</a>
+                                    <!-- you can add extra links here if needed -->
                                 </div>
                             </div>
                         {% else %}
@@ -384,4 +428,4 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
-</html>git
+</html>
