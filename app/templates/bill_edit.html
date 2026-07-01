@@ -1,63 +1,17 @@
 {% block content %}
 <style>
-    /* Base dark theme */
-    select {
-        background-color: #1e293b !important;
+    /* ✅ This is the ONLY fix needed – targets dropdown options */
+    select option {
+        background-color: #1e293b !important; /* Dark slate */
         color: #ffffff !important;
+        padding: 8px 12px;
     }
-
-    /* Custom Dark Dropdown */
-    .custom-select {
-        position: relative;
-        width: 100%;
+    select option:hover {
+        background-color: #334155 !important;
     }
-    .custom-select-trigger {
-        background-color: #1e293b;
-        border: 1px solid #475569;
-        color: white;
-        padding: 12px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        min-height: 52px;
-    }
-    .custom-select-trigger:hover {
-        border-color: #14b8a6;
-    }
-    .custom-select-options {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background-color: #1e293b;
-        border: 1px solid #475569;
-        border-radius: 8px;
-        margin-top: 4px;
-        max-height: 260px;
-        overflow-y: auto;
-        z-index: 50;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-        display: none;
-    }
-    .custom-select-options.show {
-        display: block;
-    }
-    .custom-option {
-        padding: 12px 16px;
-        color: #e2e8f0;
-        cursor: pointer;
-        border-bottom: 1px solid #334155;
-    }
-    .custom-option:last-child {
-        border-bottom: none;
-    }
-    .custom-option:hover {
-        background-color: #334155;
-    }
-    .custom-option.selected {
-        background-color: #0f766e;
-        color: white;
+    select option:checked {
+        background-color: #0d9488 !important; /* Teal accent */
+        color: #ffffff !important;
     }
 </style>
 
@@ -76,28 +30,17 @@
                 </select>
             </div>
 
-            <!-- Appointment - Custom -->
+            <!-- Appointment -->
             <div>
-                <label class="block text-white/80 text-sm font-medium mb-1">Appointment</label>
-                <div class="custom-select" id="appointment-select">
-                    <input type="hidden" name="appointment_id" id="appointment_id" value="{{ bill.appointment_id or '' }}">
-                    <div class="custom-select-trigger" id="appointment-trigger">
-                        {% if selected_appointment %}
-                            Dr. {{ selected_appointment.doctor.full_name }} on {{ selected_appointment.date.strftime('%d/%m/%Y') }} at {{ selected_appointment.start_time.strftime('%I:%M %p') }}
-                        {% else %}
-                            -- None --
-                        {% endif %}
-                    </div>
-                    <div class="custom-select-options" id="appointment-options">
-                        <div class="custom-option" data-value="">-- None --</div>
-                        {% for apt in appointments %}
-                        <div class="custom-option {% if apt.id == bill.appointment_id %}selected{% endif %}" 
-                             data-value="{{ apt.id }}">
-                            Dr. {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                <label for="appointment_id" class="block text-white/80 text-sm font-medium mb-1">Appointment</label>
+                <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                    <option value="">-- None --</option>
+                    {% for apt in appointments %}
+                    <option value="{{ apt.id }}" {% if apt.id == bill.appointment_id %}selected{% endif %}>
+                        Dr. {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
 
             <!-- Amount -->
@@ -113,20 +56,14 @@
                 <textarea name="items" id="items" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400">{{ bill.items or '' }}</textarea>
             </div>
 
-            <!-- Status - Custom -->
+            <!-- Status -->
             <div>
-                <label class="block text-white/80 text-sm font-medium mb-1">Status</label>
-                <div class="custom-select" id="status-select">
-                    <input type="hidden" name="status" id="status" value="{{ bill.status or 'Pending' }}">
-                    <div class="custom-select-trigger" id="status-trigger">
-                        {{ bill.status or 'Pending' }}
-                    </div>
-                    <div class="custom-select-options" id="status-options">
-                        <div class="custom-option {% if bill.status == 'Pending' %}selected{% endif %}" data-value="Pending">Pending</div>
-                        <div class="custom-option {% if bill.status == 'Paid' %}selected{% endif %}" data-value="Paid">Paid</div>
-                        <div class="custom-option {% if bill.status == 'Overdue' %}selected{% endif %}" data-value="Overdue">Overdue</div>
-                    </div>
-                </div>
+                <label for="status" class="block text-white/80 text-sm font-medium mb-1">Status</label>
+                <select name="status" id="status" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                    <option value="Pending" {% if bill.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Paid" {% if bill.status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Overdue" {% if bill.status == 'Overdue' %}selected{% endif %}>Overdue</option>
+                </select>
             </div>
 
             <button type="submit" class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30">
@@ -135,41 +72,4 @@
         </form>
     </div>
 </div>
-
-<script>
-    function initCustomSelect(id) {
-        const container = document.getElementById(id);
-        if (!container) return;
-
-        const trigger = container.querySelector('.custom-select-trigger');
-        const optionsContainer = container.querySelector('.custom-select-options');
-        const hiddenInput = container.querySelector('input[type="hidden"]');
-
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            optionsContainer.classList.toggle('show');
-        });
-
-        optionsContainer.querySelectorAll('.custom-option').forEach(option => {
-            option.addEventListener('click', () => {
-                hiddenInput.value = option.dataset.value;
-                trigger.textContent = option.textContent.trim();
-                
-                optionsContainer.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                
-                optionsContainer.classList.remove('show');
-            });
-        });
-
-        document.addEventListener('click', () => {
-            optionsContainer.classList.remove('show');
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initCustomSelect('appointment-select');
-        initCustomSelect('status-select');
-    });
-</script>
 {% endblock %}
