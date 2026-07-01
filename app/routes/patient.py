@@ -53,6 +53,9 @@ def dashboard():
     total_bills = Bill.query.filter_by(patient_id=patient.id).count()
     unpaid_bills = Bill.query.filter_by(patient_id=patient.id, status='pending').count()
 
+    # Check if patient has insurance
+    insurance = Insurance.query.filter_by(patient_id=patient.id).first()
+
     return render_template(
         'patient_dashboard.html',
         patient=patient,
@@ -61,10 +64,50 @@ def dashboard():
         pending_appointments=pending_appointments,
         total_appointments=total_appointments,
         total_bills=total_bills,
-        unpaid_bills=unpaid_bills
+        unpaid_bills=unpaid_bills,
+        has_insurance=bool(insurance)
     )
 
 
+# ============================
+# MEDICAL HISTORY
+# ============================
+@patient_bp.route('/medical_history')
+@login_required
+@patient_required
+def medical_history():
+    patient = Patient.query.filter_by(user_id=current_user.id).first()
+    if not patient:
+        flash('Patient profile not found.', 'danger')
+        return redirect(url_for('main.index'))
+
+    appointments = Appointment.query.filter_by(patient_id=patient.id).order_by(
+        Appointment.date.desc(), Appointment.start_time.desc()
+    ).all()
+
+    prescriptions = Prescription.query.filter_by(patient_id=patient.id).order_by(
+        Prescription.created_at.desc()
+    ).all()
+
+    bills = Bill.query.filter_by(patient_id=patient.id).order_by(
+        Bill.created_at.desc()
+    ).all()
+
+    insurance = Insurance.query.filter_by(patient_id=patient.id).first()
+
+    return render_template(
+        'patient_medical_history.html',
+        patient=patient,
+        appointments=appointments,
+        prescriptions=prescriptions,
+        bills=bills,
+        insurance=insurance
+    )
+
+
+# ============================
+# VIEW ALL APPOINTMENTS
+# ============================
 @patient_bp.route('/appointments')
 @login_required
 @patient_required
@@ -80,6 +123,9 @@ def appointments():
     return render_template('patient_appointments.html', appointments=all_appointments)
 
 
+# ============================
+# API: AVAILABLE SLOTS
+# ============================
 @patient_bp.route('/api/available_slots/<int:doctor_id>')
 @login_required
 @patient_required
@@ -97,6 +143,9 @@ def api_available_slots(doctor_id):
     return jsonify(result)
 
 
+# ============================
+# BOOK APPOINTMENT
+# ============================
 @patient_bp.route('/book', methods=['GET', 'POST'])
 @login_required
 @patient_required
@@ -142,7 +191,6 @@ def book_appointment():
         slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
         end_time = (datetime.combine(date, start_time) + timedelta(minutes=slot_duration)).time()
 
-        # Generate unique reference
         reference = Appointment.generate_reference()
 
         appointment = Appointment(
@@ -158,7 +206,7 @@ def book_appointment():
         db.session.add(appointment)
         db.session.commit()
 
-        # --- Send "Waiting for Approval" email to patient ---
+        # Send "Waiting for Approval" email
         try:
             doctor = Doctor.query.get(doctor_id)
             patient_email = patient.user.email
@@ -188,9 +236,8 @@ def book_appointment():
         except Exception as e:
             print(f"❌ Failed to send waiting email: {e}")
 
-        # --- Notify doctor ---
+        # Notify doctor
         try:
-            doctor = Doctor.query.get(doctor_id)
             if doctor and doctor.user.email:
                 subject = f"New Appointment Request from {patient.full_name}"
                 html = build_skd_email_template(
@@ -214,7 +261,7 @@ def book_appointment():
         flash('Appointment request sent! Please wait for doctor confirmation.', 'success')
         return redirect(url_for('patient.dashboard'))
 
-    # GET
+    # GET: show booking form
     doctors = Doctor.query.all()
     slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
     return render_template(
@@ -224,6 +271,10 @@ def book_appointment():
         now=datetime.now()
     )
 
+
+# ============================
+# CANCEL APPOINTMENT
+# ============================
 @patient_bp.route('/appointment/<int:appointment_id>/cancel', methods=['POST'])
 @login_required
 @patient_required
@@ -251,6 +302,9 @@ def cancel_appointment(appointment_id):
     return redirect(url_for('patient.dashboard'))
 
 
+# ============================
+# VIEW APPOINTMENT DETAILS
+# ============================
 @patient_bp.route('/appointment/<int:appointment_id>')
 @login_required
 @patient_required
@@ -263,6 +317,9 @@ def view_appointment(appointment_id):
     return render_template('patient_appointment_details.html', appointment=appointment)
 
 
+# ============================
+# PROFILE
+# ============================
 @patient_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 @patient_required
@@ -293,6 +350,9 @@ def profile():
     return render_template('patient_profile.html', patient=patient)
 
 
+# ============================
+# PRESCRIPTIONS
+# ============================
 @patient_bp.route('/prescriptions')
 @login_required
 @patient_required
@@ -308,6 +368,9 @@ def prescriptions():
     return render_template('patient_prescriptions.html', prescriptions=all_prescriptions)
 
 
+# ============================
+# BILLS
+# ============================
 @patient_bp.route('/bills')
 @login_required
 @patient_required
@@ -321,6 +384,9 @@ def bills():
     return render_template('patient_bills.html', bills=all_bills)
 
 
+# ============================
+# PAY BILL
+# ============================
 @patient_bp.route('/bill/<int:bill_id>/pay', methods=['POST'])
 @login_required
 @patient_required
@@ -334,6 +400,8 @@ def pay_bill(bill_id):
         flash('This bill is already paid.', 'info')
         return redirect(url_for('patient.bills'))
 
+    # TODO: Apply insurance if available
+    # For now, mark as paid
     bill.status = 'paid'
     bill.paid_at = datetime.utcnow()
     db.session.commit()

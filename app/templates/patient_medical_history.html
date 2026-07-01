@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-white text-glow">Medical History</h1>
+        <a href="{{ url_for('patient.dashboard') }}" class="text-teal-400 hover:text-teal-300">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Insurance Card -->
+    <div class="glass p-6 rounded-2xl mb-8">
+        <h2 class="text-2xl font-bold text-white text-glow mb-4">
+            <i class="fas fa-shield-alt text-teal-300 mr-2"></i> Insurance
+        </h2>
+        {% if insurance %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/80">
+                <div><strong class="text-white/60">Provider:</strong> {{ insurance.provider }}</div>
+                <div><strong class="text-white/60">Policy #:</strong> {{ insurance.policy_number }}</div>
+                <div><strong class="text-white/60">Coverage:</strong> {{ insurance.coverage_details or 'N/A' }}</div>
+                <div><strong class="text-white/60">Expiry:</strong> {{ insurance.expiry_date.strftime('%Y-%m-%d') if insurance.expiry_date else 'N/A' }}</div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ url_for('patient.bills') }}" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition text-sm">
+                    <i class="fas fa-file-invoice mr-1"></i> Apply Insurance to Bills
+                </a>
+            </div>
+        {% else %}
+            <p class="text-white/60">You don't have any insurance on file.</p>
+        {% endif %}
+    </div>
+
+    <!-- Appointments -->
+    <div class="glass rounded-2xl overflow-hidden mb-8">
+        <div class="px-6 py-4 bg-white/5 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">Past Appointments</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Doctor</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apt in appointments %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6">{{ apt.date.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-4 px-6">Dr. {{ apt.doctor.full_name }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                       {% if apt.status == 'completed' %}bg-green-500/20 text-green-300
+                                       {% elif apt.status == 'cancelled' %}bg-red-500/20 text-red-300
+                                       {% else %}bg-yellow-500/20 text-yellow-300{% endif %}">
+                                {{ apt.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="py-8 text-center text-white/40">No appointments found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Prescriptions -->
+    <div class="glass rounded-2xl overflow-hidden mb-8">
+        <div class="px-6 py-4 bg-white/5 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">Prescriptions</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Medication</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Doctor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6">{{ rx.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-4 px-6">{{ rx.medication }}</td>
+                        <td class="py-4 px-6">Dr. {{ rx.doctor.full_name }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="py-8 text-center text-white/40">No prescriptions found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bills -->
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="px-6 py-4 bg-white/5 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">Bills</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Amount</th>
+                        <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-4 px-6">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-4 px-6">₹{{ "%.2f"|format(bill.amount) }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                       {% if bill.status == 'paid' %}bg-green-500/20 text-green-300
+                                       {% else %}bg-yellow-500/20 text-yellow-300{% endif %}">
+                                {{ bill.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="py-8 text-center text-white/40">No bills found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
