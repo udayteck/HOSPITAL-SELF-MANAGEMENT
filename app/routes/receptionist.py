@@ -204,35 +204,47 @@ def manage_bills():
 @login_required
 @receptionist_required
 def generate_bill():
-    if request.method == 'POST':
-        patient_id = request.form.get('patient_id')
-        appointment_id = request.form.get('appointment_id')
-        amount = float(request.form.get('amount'))
-        items = request.form.get('items')
-        status = request.form.get('status', 'Pending')
+    if request.method == 'GET':
+        patients = Patient.query.all()
+        appointments = Appointment.query.filter_by(status='scheduled').all()
+        return render_template('bill_form.html', patients=patients, appointments=appointments, title='Generate New Bill - Receptionist')
 
-        patient = Patient.query.get(patient_id)
-        if not patient:
-            flash('Patient not found', 'danger')
-            return redirect(url_for('receptionist.generate_bill'))
+    # POST: create the bill
+    patient_id = request.form.get('patient_id')
+    appointment_id = request.form.get('appointment_id') or None
+    amount = request.form.get('amount', type=float)
+    items = request.form.get('items', '').strip()
+    status = request.form.get('status', 'Pending')
 
-        bill_number = f"BILL-{datetime.utcnow().strftime('%Y%m%d')}-{Bill.query.count() + 1}"
-        bill = Bill(
-            patient_id=patient_id,
-            appointment_id=appointment_id if appointment_id else None,
-            amount=amount,
-            description=items,
-            status=status,
-           # created_by=current_user.id
-        )
-        db.session.add(bill)
-        db.session.commit()
-        flash(f'Bill {bill_number} generated successfully', 'success')
-        return redirect(url_for('receptionist.manage_bills'))
+    if not patient_id or amount is None:
+        flash('Patient and Amount are required.', 'danger')
+        return redirect(url_for('receptionist.generate_bill'))
 
-    patients = Patient.query.all()
-    appointments = Appointment.query.filter_by(status='scheduled').all()
-    return render_template('bill_form.html', patients=patients, appointments=appointments, title='Generate New Bill - Receptionist')
+    # Create bill using attribute assignment (fixes TypeError)
+    bill = Bill()
+    bill.patient_id = int(patient_id)
+    bill.appointment_id = int(appointment_id) if appointment_id else None
+    bill.amount = amount
+    bill.status = status
+
+    # 🔽 ADJUST THIS LINE TO MATCH YOUR MODEL'S COLUMN NAME
+    # Possible names: description, items, notes, details, service_details
+    bill.description = items   # ← change to your column name if different
+
+    # If you have a "created_by" column, uncomment next line
+    # bill.created_by = current_user.id
+
+    db.session.add(bill)
+    db.session.flush()  # gets the auto-increment ID
+
+    # Generate a bill number (optional – only if column exists)
+    bill_number = f"BILL-{datetime.utcnow().strftime('%Y%m%d')}-{bill.id}"
+    bill.bill_number = bill_number   # ← if you have this column
+
+    db.session.commit()
+
+    flash(f'Bill #{bill.bill_number or bill.id} generated successfully!', 'success')
+    return redirect(url_for('receptionist.manage_bills'))
 
 
 @receptionist_bp.route('/bills/view/<int:bill_id>')
@@ -248,28 +260,30 @@ def view_bill(bill_id):
 @receptionist_required
 def edit_bill(bill_id):
     bill = Bill.query.get_or_404(bill_id)
-    if request.method == 'POST':
-        patient_id = request.form.get('patient_id')
-        appointment_id = request.form.get('appointment_id')
-        amount = float(request.form.get('amount'))
-        items = request.form.get('items')
-        status = request.form.get('status')
+    if request.method == 'GET':
+        patients = Patient.query.all()
+        appointments = Appointment.query.filter_by(status='scheduled').all()
+        return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
 
-        patient = Patient.query.get(patient_id)
-        if not patient:
-            flash('Patient not found', 'danger')
-            return redirect(url_for('receptionist.edit_bill', bill_id=bill.id))
+    # POST update
+    patient_id = request.form.get('patient_id')
+    appointment_id = request.form.get('appointment_id') or None
+    amount = request.form.get('amount', type=float)
+    items = request.form.get('items', '').strip()
+    status = request.form.get('status')
 
-        bill.patient_id = patient_id
-        bill.appointment_id = appointment_id if appointment_id else None
-        bill.amount = amount
-        bill.items = items
-        bill.status = status
-        db.session.commit()
+    if not patient_id or amount is None:
+        flash('Patient and Amount are required.', 'danger')
+        return redirect(url_for('receptionist.edit_bill', bill_id=bill.id))
 
-        flash('Bill updated successfully!', 'success')
-        return redirect(url_for('receptionist.view_bill', bill_id=bill.id))
+    bill.patient_id = int(patient_id)
+    bill.appointment_id = int(appointment_id) if appointment_id else None
+    bill.amount = amount
+    bill.status = status
 
-    patients = Patient.query.all()
-    appointments = Appointment.query.filter_by(status='scheduled').all()
-    return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
+    # 🔽 Use the same column name as in generate_bill
+    bill.description = items   # ← change to your column name if different
+
+    db.session.commit()
+    flash('Bill updated successfully!', 'success')
+    return redirect(url_for('receptionist.view_bill', bill_id=bill.id))

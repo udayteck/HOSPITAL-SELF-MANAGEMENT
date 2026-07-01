@@ -9,8 +9,10 @@ from app.forms import DoctorForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 
-admin_bp = Blueprint('admin', __name__)
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+
+# ---------- Admin decorator (replaces missing app.decorators) ----------
 def admin_required(f):
     from functools import wraps
     @wraps(f)
@@ -198,6 +200,7 @@ def analytics():
         recent_appointments=recent_appointments
     )
 
+
 # ========== DOCTOR MANAGEMENT ==========
 @admin_bp.route('/doctors')
 @login_required
@@ -359,40 +362,48 @@ def manage_bills():
                          paid_amount=paid_amount,
                          overdue_amount=overdue_amount)
 
+
 @admin_bp.route('/bills/generate', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def generate_bill():
-    if request.method == 'POST':
-        patient_id = request.form.get('patient_id')
-        appointment_id = request.form.get('appointment_id')
-        amount = float(request.form.get('amount'))
-        items = request.form.get('items')
-        status = request.form.get('status', 'Pending')
+    if request.method == 'GET':
+        patients = Patient.query.all()
+        appointments = Appointment.query.filter_by(status='scheduled').all()
+        return render_template('bill_form.html', patients=patients, appointments=appointments, title='Generate New Bill')
 
-        patient = Patient.query.get(patient_id)
-        if not patient:
-            flash('Patient not found', 'danger')
-            return redirect(url_for('admin.generate_bill'))
+    # POST: create the bill using attribute assignment (no TypeError)
+    patient_id = request.form.get('patient_id')
+    appointment_id = request.form.get('appointment_id') or None
+    amount = request.form.get('amount', type=float)
+    items = request.form.get('items', '').strip()
+    status = request.form.get('status', 'Pending')
 
-        bill_number = f"BILL-{datetime.utcnow().strftime('%Y%m%d')}-{Bill.query.count() + 1}"
-        bill = Bill(
-            #bill_number=bill_number,
-            patient_id=patient_id,
-            appointment_id=appointment_id if appointment_id else None,
-            amount=amount,
-            description=items,
-            status=status,
-           # created_by=current_user.id
-        )
-        db.session.add(bill)
-        db.session.commit()
-        flash(f'Bill {bill_number} generated successfully', 'success')
-        return redirect(url_for('admin.manage_bills'))
+    if not patient_id or amount is None:
+        flash('Patient and Amount are required.', 'danger')
+        return redirect(url_for('admin.generate_bill'))
 
-    patients = Patient.query.all()
-    appointments = Appointment.query.filter_by(status='scheduled').all()
-    return render_template('bill_form.html', patients=patients, appointments=appointments, title='Generate New Bill')
+    bill = Bill()
+    bill.patient_id = int(patient_id)
+    bill.appointment_id = int(appointment_id) if appointment_id else None
+    bill.amount = amount
+    bill.status = status
+
+    # ADJUST THIS LINE TO MATCH YOUR MODEL'S COLUMN NAME
+    bill.description = items   # ← change to 'items', 'notes', etc. if needed
+
+    # If you have a "created_by" column, uncomment next line
+    # bill.created_by = current_user.id
+
+    db.session.add(bill)
+    db.session.flush()  # get auto-increment ID
+    bill.bill_number = f"BILL-{bill.id:06d}"   # only if column exists
+
+    db.session.commit()
+
+    flash(f'Bill #{bill.bill_number or bill.id} generated successfully!', 'success')
+    return redirect(url_for('admin.manage_bills'))
+
 
 @admin_bp.route('/bills/view/<int:bill_id>')
 @login_required
@@ -401,36 +412,48 @@ def view_bill(bill_id):
     bill = Bill.query.get_or_404(bill_id)
     return render_template('bill_details.html', bill=bill)
 
+
 @admin_bp.route('/bills/edit/<int:bill_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def edit_bill(bill_id):
     bill = Bill.query.get_or_404(bill_id)
-    if request.method == 'POST':
-        patient_id = request.form.get('patient_id')
-        appointment_id = request.form.get('appointment_id')
-        amount = float(request.form.get('amount'))
-        items = request.form.get('items')
-        status = request.form.get('status')
+    if request.method == 'GET':
+        patients = Patient.query.all()
+        appointments = Appointment.query.filter_by(status='scheduled').all()
+        return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
 
-        patient = Patient.query.get(patient_id)
-        if not patient:
-            flash('Patient not found', 'danger')
-            return redirect(url_for('admin.edit_bill', bill_id=bill.id))
+    # POST update
+    patient_id = request.form.get('patient_id')
+    appointment_id = request.form.get('appointment_id') or None
+    amount = request.form.get('amount', type=float)
+    items = request.form.get('items', '').strip()
+    status = request.form.get('status')
 
-        bill.patient_id = patient_id
-        bill.appointment_id = appointment_id if appointment_id else None
-        bill.amount = amount
-        bill.items = items
-        bill.status = status
-        db.session.commit()
+    if not patient_id or amount is None:
+        flash('Patient and Amount are required.', 'danger')
+        return redirect(url_for('admin.edit_bill', bill_id=bill.id))
 
-        flash('Bill updated successfully!', 'success')
-        return redirect(url_for('admin.view_bill', bill_id=bill.id))
+    bill.patient_id = int(patient_id)
+    bill.appointment_id = int(appointment_id) if appointment_id else None
+    bill.amount = amount
+    bill.status = status
+    bill.description = items   # ← change to your column name
 
-    patients = Patient.query.all()
-    appointments = Appointment.query.filter_by(status='scheduled').all()
-    return render_template('bill_edit.html', bill=bill, patients=patients, appointments=appointments)
+    db.session.commit()
+    flash('Bill updated successfully!', 'success')
+    return redirect(url_for('admin.view_bill', bill_id=bill.id))
+
+
+@admin_bp.route('/bills/delete/<int:bill_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_bill(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    db.session.delete(bill)
+    db.session.commit()
+    flash('Bill deleted.', 'info')
+    return redirect(url_for('admin.manage_bills'))
 
 
 # ========== PATIENT INSURANCE (ADMIN) ==========
