@@ -28,7 +28,7 @@
             <div><strong class="text-white/60">Paid on:</strong> {{ bill.paid_at.strftime('%Y-%m-%d %H:%M') if bill.paid_at else '—' }}</div>
             <div><strong class="text-white/60">Appointment:</strong>
                 {% if bill.appointment %}
-                    Dr. {{ bill.appointment.doctor.full_name }} on {{ bill.appointment.date.strftime('%d/%m/%Y') }} at {{ bill.appointment.start_time.strftime('%I:%M %p') }}
+                    {{ bill.appointment.doctor.full_name }} on {{ bill.appointment.date.strftime('%d/%m/%Y') }} at {{ bill.appointment.start_time.strftime('%I:%M %p') }}
                 {% else %}
                     <span class="text-white/40">No appointment linked</span>
                 {% endif %}

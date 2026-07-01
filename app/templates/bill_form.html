@@ -23,7 +23,7 @@
                 <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     <option value="">-- None --</option>
                     {% for apt in appointments %}
-                    <option value="{{ apt.id }}">Dr. {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}</option>
+                    <option value="{{ apt.id }}">{{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}</option>
                     {% endfor %}
                 </select>
             </div>
