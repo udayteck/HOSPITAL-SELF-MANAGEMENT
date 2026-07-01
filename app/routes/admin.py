@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, request,
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import (
-    User, Doctor, Patient, Appointment, Availability, 
+    User, Doctor, Patient, Appointment, Availability,
     Receptionist, GlobalSetting, Bill, Insurance
 )
 from app.forms import DoctorForm
@@ -121,6 +121,82 @@ def dashboard():
         monthly_counts=monthly_counts
     )
 
+
+@admin_bp.route('/analytics')
+@login_required
+@admin_required
+def analytics():
+    # --- Basic Counts ---
+    total_users = User.query.count()
+    total_patients = Patient.query.count()
+    total_doctors = Doctor.query.count()
+    total_appointments = Appointment.query.count()
+    total_bills = Bill.query.count()
+    total_revenue = db.session.query(func.sum(Bill.amount)).filter(Bill.status == 'paid').scalar() or 0
+
+    # --- Appointment Status Breakdown ---
+    status_counts = db.session.query(
+        Appointment.status, func.count(Appointment.id)
+    ).group_by(Appointment.status).all()
+    status_data = {status: count for status, count in status_counts}
+
+    # --- Monthly Appointments (last 12 months) ---
+    today = datetime.now().date()
+    monthly_labels = []
+    monthly_appointments = []
+    monthly_revenue = []
+
+    for i in range(11, -1, -1):
+        month = today.replace(day=1) - timedelta(days=i*30)
+        month_start = month.replace(day=1)
+        if month.month == 12:
+            month_end = month.replace(day=31)
+        else:
+            month_end = month.replace(month=month.month+1, day=1) - timedelta(days=1)
+        # Appointments count
+        count = Appointment.query.filter(
+            Appointment.date >= month_start,
+            Appointment.date <= month_end
+        ).count()
+        monthly_appointments.append(count)
+        # Revenue (paid bills)
+        revenue = db.session.query(func.sum(Bill.amount)).filter(
+            Bill.status == 'paid',
+            Bill.paid_at >= month_start,
+            Bill.paid_at <= month_end
+        ).scalar() or 0
+        monthly_revenue.append(float(revenue))
+        monthly_labels.append(month.strftime('%b %Y'))
+
+    # --- Top Doctors by Appointments ---
+    top_doctors = db.session.query(
+        Doctor.full_name, func.count(Appointment.id).label('appt_count')
+    ).join(Appointment, Appointment.doctor_id == Doctor.id).group_by(Doctor.id).order_by(
+        func.count(Appointment.id).desc()
+    ).limit(5).all()
+
+    top_doctors_data = [{'name': d[0], 'count': d[1]} for d in top_doctors]
+
+    # --- Recent Appointments (last 10) ---
+    recent_appointments = Appointment.query.order_by(
+        Appointment.created_at.desc()
+    ).limit(10).all()
+
+    return render_template(
+        'admin_analytics.html',
+        total_users=total_users,
+        total_patients=total_patients,
+        total_doctors=total_doctors,
+        total_appointments=total_appointments,
+        total_bills=total_bills,
+        total_revenue=total_revenue,
+        status_data=status_data,
+        monthly_labels=monthly_labels,
+        monthly_appointments=monthly_appointments,
+        monthly_revenue=monthly_revenue,
+        top_doctors_data=top_doctors_data,
+        recent_appointments=recent_appointments
+    )
 
 # ========== DOCTOR MANAGEMENT ==========
 @admin_bp.route('/doctors')
