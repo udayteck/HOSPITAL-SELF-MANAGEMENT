@@ -3,9 +3,9 @@ import string
 from datetime import datetime, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.extensions import db   # <-- import from extensions
+from app.extensions import db
 
-# ---------- User ----------
+# ========== User ==========
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -30,7 +30,7 @@ class User(UserMixin, db.Model):
         return f'<User {self.email}>'
 
 
-# ---------- Patient ----------
+# ========== Patient ==========
 class Patient(db.Model):
     __tablename__ = 'patients'
 
@@ -56,7 +56,7 @@ class Patient(db.Model):
         return f'<Patient {self.full_name}>'
 
 
-# ---------- Doctor ----------
+# ========== Doctor ==========
 class Doctor(db.Model):
     __tablename__ = 'doctors'
 
@@ -79,7 +79,7 @@ class Doctor(db.Model):
         return f'<Doctor {self.full_name}>'
 
 
-# ---------- Receptionist ----------
+# ========== Receptionist ==========
 class Receptionist(db.Model):
     __tablename__ = 'receptionists'
 
@@ -94,7 +94,7 @@ class Receptionist(db.Model):
         return f'<Receptionist {self.full_name}>'
 
 
-# ---------- Appointment ----------
+# ========== Appointment ==========
 class Appointment(db.Model):
     __tablename__ = 'appointments'
 
@@ -104,7 +104,7 @@ class Appointment(db.Model):
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    status = db.Column(db.String(20), default='scheduled')  # scheduled, completed, cancelled
+    status = db.Column(db.String(20), default='scheduled')  # scheduled, completed, cancelled, pending
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -115,7 +115,7 @@ class Appointment(db.Model):
         return f'<Appointment {self.id} - {self.date}>'
 
 
-# ---------- Prescription ----------
+# ========== Prescription ==========
 class Prescription(db.Model):
     __tablename__ = 'prescriptions'
 
@@ -134,7 +134,7 @@ class Prescription(db.Model):
         return f'<Prescription {self.id} for Patient {self.patient_id}>'
 
 
-# ---------- Availability ----------
+# ========== Availability ==========
 class Availability(db.Model):
     __tablename__ = 'availabilities'
 
@@ -146,11 +146,52 @@ class Availability(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def get_available_slots(cls, doctor_id, date):
+        """
+        Return list of available time slots for a doctor on a given date.
+        Each slot is a dict with 'start', 'end' (both time objects).
+        """
+        from datetime import datetime, timedelta
+        day_of_week = date.weekday()
+        availabilities = cls.query.filter_by(
+            doctor_id=doctor_id,
+            day_of_week=day_of_week,
+            is_active=True
+        ).all()
+        if not availabilities:
+            return []
+
+        slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
+        slots = []
+        for avail in availabilities:
+            current = datetime.combine(date, avail.start_time)
+            end = datetime.combine(date, avail.end_time)
+            step = timedelta(minutes=slot_duration)
+            while current + step <= end:
+                slot_start = current.time()
+                slot_end = (current + step).time()
+                existing = Appointment.query.filter_by(
+                    doctor_id=doctor_id,
+                    date=date,
+                    start_time=slot_start,
+                    status='scheduled'
+                ).first()
+                if not existing:
+                    slots.append({
+                        'start': slot_start.strftime('%H:%M'),
+                        'end': slot_end.strftime('%H:%M'),
+                        'start_obj': slot_start,
+                        'end_obj': slot_end
+                    })
+                current += step
+        return slots
+
     def __repr__(self):
         return f'<Availability for Doctor {self.doctor_id} on {self.day_of_week}>'
 
 
-# ---------- Insurance ----------
+# ========== Insurance ==========
 class Insurance(db.Model):
     __tablename__ = 'insurances'
 
@@ -166,7 +207,7 @@ class Insurance(db.Model):
         return f'<Insurance {self.provider} for Patient {self.patient_id}>'
 
 
-# ---------- Bill ----------
+# ========== Bill ==========
 class Bill(db.Model):
     __tablename__ = 'bills'
 
@@ -183,7 +224,7 @@ class Bill(db.Model):
         return f'<Bill {self.id} - {self.amount}>'
 
 
-# ---------- Global Setting ----------
+# ========== Global Setting ==========
 class GlobalSetting(db.Model):
     __tablename__ = 'global_settings'
 
@@ -212,7 +253,7 @@ class GlobalSetting(db.Model):
         return f'<GlobalSetting {self.key}={self.value}>'
 
 
-# ---------- Email Verification ----------
+# ========== Email Verification ==========
 class EmailVerification(db.Model):
     __tablename__ = 'email_verifications'
 
@@ -224,15 +265,12 @@ class EmailVerification(db.Model):
 
     @classmethod
     def generate_otp(cls, length=6):
-        """Generate a numeric OTP of given length."""
         return ''.join(secrets.choice(string.digits) for _ in range(length))
 
     @classmethod
     def create_otp(cls, email, length=6, expiry_minutes=10):
-        """Create and store an OTP for the given email."""
         otp = cls.generate_otp(length)
         expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
-        # Delete any existing OTP for this email
         cls.query.filter_by(email=email).delete()
         db.session.commit()
         record = cls(email=email, otp=otp, expires_at=expires_at)
@@ -242,7 +280,6 @@ class EmailVerification(db.Model):
 
     @classmethod
     def verify_otp(cls, email, otp):
-        """Verify OTP for the given email."""
         record = cls.query.filter_by(email=email).first()
         if not record:
             return False
@@ -250,7 +287,6 @@ class EmailVerification(db.Model):
             return False
         if datetime.utcnow() > record.expires_at:
             return False
-        # OTP is valid; delete it to prevent reuse
         db.session.delete(record)
         db.session.commit()
         return True

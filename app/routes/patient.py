@@ -21,9 +21,6 @@ def patient_required(f):
     return decorated
 
 
-# ============================
-# PATIENT DASHBOARD
-# ============================
 @patient_bp.route('/dashboard')
 @login_required
 @patient_required
@@ -33,26 +30,22 @@ def dashboard():
         flash('Patient profile not found.', 'danger')
         return redirect(url_for('main.index'))
 
-    # Upcoming appointments (scheduled, future)
     upcoming_appointments = Appointment.query.filter(
         Appointment.patient_id == patient.id,
         Appointment.status == 'scheduled',
         Appointment.date >= datetime.now().date()
     ).order_by(Appointment.date, Appointment.start_time).all()
 
-    # Past appointments (completed or cancelled)
     past_appointments = Appointment.query.filter(
         Appointment.patient_id == patient.id,
         Appointment.status.in_(['completed', 'cancelled'])
     ).order_by(Appointment.date.desc()).all()
 
-    # Pending appointments (if any)
     pending_appointments = Appointment.query.filter(
         Appointment.patient_id == patient.id,
         Appointment.status == 'pending'
     ).all()
 
-    # Total counts
     total_appointments = Appointment.query.filter_by(patient_id=patient.id).count()
     total_bills = Bill.query.filter_by(patient_id=patient.id).count()
     unpaid_bills = Bill.query.filter_by(patient_id=patient.id, status='pending').count()
@@ -69,9 +62,6 @@ def dashboard():
     )
 
 
-# ============================
-# VIEW ALL APPOINTMENTS
-# ============================
 @patient_bp.route('/appointments')
 @login_required
 @patient_required
@@ -87,9 +77,23 @@ def appointments():
     return render_template('patient_appointments.html', appointments=all_appointments)
 
 
-# ============================
-# BOOK APPOINTMENT (step by step)
-# ============================
+@patient_bp.route('/api/available_slots/<int:doctor_id>')
+@login_required
+@patient_required
+def api_available_slots(doctor_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({'error': 'Date required'}), 400
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    slots = Availability.get_available_slots(doctor_id, date)
+    result = [{'start': s['start'], 'end': s['end']} for s in slots]
+    return jsonify(result)
+
+
 @patient_bp.route('/book', methods=['GET', 'POST'])
 @login_required
 @patient_required
@@ -103,43 +107,51 @@ def book_appointment():
         doctor_id = request.form.get('doctor_id')
         date_str = request.form.get('date')
         start_time_str = request.form.get('start_time')
+        notes = request.form.get('notes', '')
 
         if not doctor_id or not date_str or not start_time_str:
-            flash('All fields are required.', 'danger')
+            flash('Please select doctor, date, and time.', 'danger')
             return redirect(url_for('patient.book_appointment'))
 
         try:
-            appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
             start_time = datetime.strptime(start_time_str, '%H:%M').time()
         except ValueError:
             flash('Invalid date or time format.', 'danger')
             return redirect(url_for('patient.book_appointment'))
 
-        # Check if the slot is already booked
+        available_slots = Availability.get_available_slots(doctor_id, date)
+        slot_found = any(s['start_obj'] == start_time for s in available_slots)
+        if not slot_found:
+            flash('Selected slot is not available.', 'danger')
+            return redirect(url_for('patient.book_appointment'))
+
         existing = Appointment.query.filter_by(
             doctor_id=doctor_id,
-            date=appointment_date,
+            date=date,
             start_time=start_time,
             status='scheduled'
         ).first()
         if existing:
-            flash('This slot is already booked. Please choose another time.', 'danger')
+            flash('This slot was just booked by someone else. Please choose another.', 'danger')
             return redirect(url_for('patient.book_appointment'))
 
-        # Create appointment (pending by default)
+        slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
+        end_time = (datetime.combine(date, start_time) + timedelta(minutes=slot_duration)).time()
+
         appointment = Appointment(
             patient_id=patient.id,
             doctor_id=doctor_id,
-            date=appointment_date,
+            date=date,
             start_time=start_time,
-            end_time=(datetime.combine(appointment_date, start_time) + timedelta(minutes=30)).time(),
+            end_time=end_time,
             status='pending',
-            notes=request.form.get('notes', '')
+            notes=notes
         )
         db.session.add(appointment)
         db.session.commit()
 
-        # Notify doctor (email)
+        # Notify doctor (optional)
         try:
             doctor = Doctor.query.get(doctor_id)
             if doctor and doctor.user.email:
@@ -150,7 +162,7 @@ def book_appointment():
                     main_content=f"""
                     <p>A new appointment has been requested by <strong>{patient.full_name}</strong>.</p>
                     <div style="background: #f0fdfa; border-left: 5px solid #14b8a6; border-radius: 12px; padding: 16px; margin: 24px 0;">
-                        <p><strong>📅 Date:</strong> {appointment_date.strftime('%A, %B %d, %Y')}</p>
+                        <p><strong>📅 Date:</strong> {date.strftime('%A, %B %d, %Y')}</p>
                         <p><strong>⏰ Time:</strong> {start_time.strftime('%I:%M %p')}</p>
                         <p><strong>📝 Notes:</strong> {appointment.notes or 'None'}</p>
                     </div>
@@ -164,16 +176,17 @@ def book_appointment():
         flash('Appointment request sent! Please wait for doctor confirmation.', 'success')
         return redirect(url_for('patient.dashboard'))
 
-    # GET: show booking form
+    # GET
     doctors = Doctor.query.all()
-    # Get global settings for slot duration
     slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
-    return render_template('book_appointment.html', doctors=doctors, slot_duration=slot_duration)
+    return render_template(
+        'book_appointment.html',
+        doctors=doctors,
+        slot_duration=slot_duration,
+        now=datetime.now()
+    )
 
 
-# ============================
-# CANCEL APPOINTMENT
-# ============================
 @patient_bp.route('/appointment/<int:appointment_id>/cancel', methods=['POST'])
 @login_required
 @patient_required
@@ -187,7 +200,6 @@ def cancel_appointment(appointment_id):
         flash('This appointment cannot be cancelled.', 'warning')
         return redirect(url_for('patient.dashboard'))
 
-    # Check cancellation policy (e.g., at least 24 hours before)
     now = datetime.now()
     appointment_datetime = datetime.combine(appointment.date, appointment.start_time)
     hours_diff = (appointment_datetime - now).total_seconds() / 3600
@@ -202,9 +214,6 @@ def cancel_appointment(appointment_id):
     return redirect(url_for('patient.dashboard'))
 
 
-# ============================
-# VIEW APPOINTMENT DETAILS
-# ============================
 @patient_bp.route('/appointment/<int:appointment_id>')
 @login_required
 @patient_required
@@ -217,9 +226,6 @@ def view_appointment(appointment_id):
     return render_template('patient_appointment_details.html', appointment=appointment)
 
 
-# ============================
-# PROFILE / UPDATE INFO
-# ============================
 @patient_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 @patient_required
@@ -237,7 +243,6 @@ def profile():
         patient.blood_group = request.form.get('blood_group', patient.blood_group)
         patient.allergies = request.form.get('allergies', patient.allergies)
         patient.medical_history = request.form.get('medical_history', patient.medical_history)
-        # Date of birth
         dob_str = request.form.get('date_of_birth')
         if dob_str:
             try:
@@ -251,9 +256,6 @@ def profile():
     return render_template('patient_profile.html', patient=patient)
 
 
-# ============================
-# VIEW PRESCRIPTIONS
-# ============================
 @patient_bp.route('/prescriptions')
 @login_required
 @patient_required
@@ -269,9 +271,6 @@ def prescriptions():
     return render_template('patient_prescriptions.html', prescriptions=all_prescriptions)
 
 
-# ============================
-# VIEW BILLS
-# ============================
 @patient_bp.route('/bills')
 @login_required
 @patient_required
@@ -285,9 +284,6 @@ def bills():
     return render_template('patient_bills.html', bills=all_bills)
 
 
-# ============================
-# PAY BILL (simulated)
-# ============================
 @patient_bp.route('/bill/<int:bill_id>/pay', methods=['POST'])
 @login_required
 @patient_required
@@ -301,8 +297,6 @@ def pay_bill(bill_id):
         flash('This bill is already paid.', 'info')
         return redirect(url_for('patient.bills'))
 
-    # In a real system, integrate payment gateway here.
-    # For demo, mark as paid.
     bill.status = 'paid'
     bill.paid_at = datetime.utcnow()
     db.session.commit()
