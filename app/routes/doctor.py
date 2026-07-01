@@ -232,7 +232,7 @@ def reject_appointment(appointment_id):
 
 
 # ============================
-# LEGACY APPOINTMENT ROUTES (Keep for compatibility)
+# LEGACY APPOINTMENT ROUTES
 # ============================
 @doctor_bp.route('/appointment/<int:appointment_id>/update', methods=['POST'])
 @login_required
@@ -400,7 +400,7 @@ def appointments():
 
 
 # ============================
-# PATIENTS LIST
+# PATIENTS LIST  (FIXED: passes doctor to template)
 # ============================
 @doctor_bp.route('/patients')
 @login_required
@@ -413,7 +413,7 @@ def patients():
     all_patients = db.session.query(Patient).join(Appointment).filter(
         Appointment.doctor_id == doctor.id
     ).distinct().all()
-    return render_template('doctor_patients.html', patients=all_patients)
+    return render_template('doctor_patients.html', patients=all_patients, doctor=doctor)
 
 
 # ============================
