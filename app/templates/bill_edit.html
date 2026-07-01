@@ -1,13 +1,20 @@
 {% block content %}
 <style>
-    /* FIX: Forces dropdown options to use dark background so white text is visible */
+    /* ✅ SAFE FIX: Only styles the DROPDOWN OPTIONS, NOT the select box itself */
     select option {
-        background-color: #1e293b !important; /* Slate-800 */
+        background-color: #0f172a !important; /* Matches your dark theme */
+        color: #ffffff !important;
+        padding: 8px 12px;
+    }
+    /* Keeps the selected/hovered option clearly visible */
+    select option:hover,
+    select option:checked {
+        background-color: #1e293b !important;
         color: #ffffff !important;
     }
-    /* Fix for the closed select state to match the glass theme */
-    select {
-        background-color: #0f172a !important; /* Slate-900 */
+    /* Ensures the dropdown menu itself has a dark background (browser native) */
+    select:focus option {
+        background-color: #0f172a;
     }
 </style>
 
@@ -19,7 +26,8 @@
             <!-- Patient -->
             <div>
                 <label for="patient_id" class="block text-white/80 text-sm font-medium mb-1">Patient</label>
-                <select name="patient_id" id="patient_id" required class="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <!-- ✅ KEPT your original bg-white/5 so it matches the glass background -->
+                <select name="patient_id" id="patient_id" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     {% for patient in patients %}
                     <option value="{{ patient.id }}" {% if patient.id == bill.patient_id %}selected{% endif %}>{{ patient.full_name }}</option>
                     {% endfor %}
@@ -29,7 +37,8 @@
             <!-- Appointment -->
             <div>
                 <label for="appointment_id" class="block text-white/80 text-sm font-medium mb-1">Appointment</label>
-                <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <!-- ✅ KEPT your original bg-white/5 -->
+                <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     <option value="">-- None --</option>
                     {% for apt in appointments %}
                     <option value="{{ apt.id }}" {% if apt.id == bill.appointment_id %}selected{% endif %}>
@@ -43,19 +52,20 @@
             <div>
                 <label for="amount" class="block text-white/80 text-sm font-medium mb-1">Amount (₹)</label>
                 <input type="number" step="0.01" name="amount" id="amount" required min="0" value="{{ bill.amount }}"
-                       class="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
             </div>
 
             <!-- Items / Description -->
             <div>
                 <label for="items" class="block text-white/80 text-sm font-medium mb-1">Description / Items</label>
-                <textarea name="items" id="items" rows="3" class="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400">{{ bill.items or '' }}</textarea>
+                <textarea name="items" id="items" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400">{{ bill.items or '' }}</textarea>
             </div>
 
             <!-- Status -->
             <div>
                 <label for="status" class="block text-white/80 text-sm font-medium mb-1">Status</label>
-                <select name="status" id="status" class="w-full px-4 py-3 bg-slate-800/80 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <!-- ✅ KEPT your original bg-white/5 -->
+                <select name="status" id="status" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     <option value="Pending" {% if bill.status == 'Pending' %}selected{% endif %}>Pending</option>
                     <option value="Paid" {% if bill.status == 'Paid' %}selected{% endif %}>Paid</option>
                     <option value="Overdue" {% if bill.status == 'Overdue' %}selected{% endif %}>Overdue</option>
