@@ -1,19 +1,32 @@
 {% block content %}
 <style>
-    /* ✅ CORRECT FIX: Dark dropdown options with Teal accent to match your theme */
+    /* ✅ Universal dark dropdown styling */
+    select {
+        background-color: #1e293b !important; /* Dark background for the select box itself */
+        color: #ffffff !important;
+    }
+
     select option {
         background-color: #1e293b !important; /* Dark slate background */
-        color: #ffffff !important;            /* White text */
+        color: #ffffff !important;
         padding: 8px 12px;
     }
-    /* Hover effect for better UX */
+
+    /* Hover effect */
     select option:hover {
         background-color: #334155 !important;
     }
-    /* Selected option highlights in Teal (matches your button/accents) */
+
+    /* Selected option highlight (Teal accent) */
     select option:checked {
-        background-color: #0d9488 !important; /* Teal-600 */
+        background-color: #0d9488 !important;
         color: #ffffff !important;
+    }
+
+    /* Improve focus state */
+    select:focus {
+        border-color: #14b8a6 !important;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.3) !important;
     }
 </style>
 
@@ -25,7 +38,8 @@
             <!-- Patient -->
             <div>
                 <label for="patient_id" class="block text-white/80 text-sm font-medium mb-1">Patient</label>
-                <select name="patient_id" id="patient_id" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <select name="patient_id" id="patient_id" required 
+                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     {% for patient in patients %}
                     <option value="{{ patient.id }}" {% if patient.id == bill.patient_id %}selected{% endif %}>{{ patient.full_name }}</option>
                     {% endfor %}
@@ -35,7 +49,8 @@
             <!-- Appointment -->
             <div>
                 <label for="appointment_id" class="block text-white/80 text-sm font-medium mb-1">Appointment</label>
-                <select name="appointment_id" id="appointment_id" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <select name="appointment_id" id="appointment_id" 
+                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     <option value="">-- None --</option>
                     {% for apt in appointments %}
                     <option value="{{ apt.id }}" {% if apt.id == bill.appointment_id %}selected{% endif %}>
@@ -61,7 +76,8 @@
             <!-- Status -->
             <div>
                 <label for="status" class="block text-white/80 text-sm font-medium mb-1">Status</label>
-                <select name="status" id="status" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
+                <select name="status" id="status" 
+                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-teal-400">
                     <option value="Pending" {% if bill.status == 'Pending' %}selected{% endif %}>Pending</option>
                     <option value="Paid" {% if bill.status == 'Paid' %}selected{% endif %}>Paid</option>
                     <option value="Overdue" {% if bill.status == 'Overdue' %}selected{% endif %}>Overdue</option>
