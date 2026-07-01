@@ -223,7 +223,7 @@ def generate_bill():
             amount=amount,
             items=items,
             status=status,
-            created_by=current_user.id
+           # created_by=current_user.id
         )
         db.session.add(bill)
         db.session.commit()
