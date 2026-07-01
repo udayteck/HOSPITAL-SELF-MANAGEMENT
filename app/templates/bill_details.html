@@ -1,78 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Bill Details - SKD Hospital{% endblock %}
+
 {% block content %}
-
-<div class="max-w-3xl mx-auto bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-6 border border-white/10">
-    <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
-        <h2 class="text-2xl font-bold text-white">Bill Details</h2>
-        <span class="px-3 py-1 rounded-full text-sm font-semibold 
-            {% if bill.status == 'Paid' %}bg-green-500/30 text-green-200
-            {% elif bill.status == 'Pending' %}bg-yellow-500/30 text-yellow-200
-            {% else %}bg-red-500/30 text-red-200{% endif %}">
-            {{ bill.status }}
-        </span>
-    </div>
-    <div class="border-t border-white/10 pt-4 space-y-3 text-white/90">
-        <p><strong class="text-white/70">Bill Number:</strong> {{ bill.bill_number }}</p>
-        <p><strong class="text-white/70">Patient:</strong> {{ bill.patient.full_name }} ({{ bill.patient.user.email }})</p>
-
-        <!-- ========== INSURANCE SECTION ========== -->
-        <div class="bg-white/5 p-3 rounded border border-white/10 mt-2">
-            <p class="text-sm font-semibold text-teal-300 mb-1">🛡️ Insurance Details</p>
-            {% if bill.patient.insurance %}
-                <div class="grid grid-cols-2 gap-1 text-sm">
-                    <span class="text-white/70">Provider:</span>
-                    <span class="text-white/90">{{ bill.patient.insurance.provider_name }}</span>
-                    <span class="text-white/70">Policy No.:</span>
-                    <span class="text-white/90">{{ bill.patient.insurance.policy_number }}</span>
-                    <span class="text-white/70">Group No.:</span>
-                    <span class="text-white/90">{{ bill.patient.insurance.group_number or 'N/A' }}</span>
-                    <span class="text-white/70">Coverage:</span>
-                    <span class="text-white/90">{{ bill.patient.insurance.coverage_details or 'N/A' }}</span>
-                    <span class="text-white/70">Status:</span>
-                    <span class="text-white/90">{{ 'Active' if bill.patient.insurance.is_active else 'Inactive' }}</span>
-                </div>
-            {% else %}
-                <p class="text-white/50 italic">No insurance on file for this patient.</p>
-            {% endif %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="glass p-8 rounded-2xl">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white text-glow">Bill Details</h1>
+                <p class="text-white/50 text-sm mt-1">#{{ bill.bill_number or bill.id }}</p>
+            </div>
+            <a href="{{ url_for('receptionist.manage_bills') if current_user.role == 'receptionist' else url_for('admin.manage_bills') }}" class="text-teal-400 hover:text-teal-300 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Bills
+            </a>
         </div>
 
-        <p><strong class="text-white/70">Appointment:</strong>
-            {% if bill.appointment %}
-                Dr. {{ bill.appointment.doctor.full_name }} on {{ bill.appointment.availability.slot_start.strftime('%d/%m/%Y %H:%M') }}
-            {% else %}
-                Not linked
-            {% endif %}
-        </p>
-        <p><strong class="text-white/70">Date:</strong> {{ bill.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-        <p><strong class="text-white/70">Items/Services:</strong></p>
-        <div class="bg-white/5 backdrop-blur-sm p-3 rounded border border-white/10">{{ bill.items|replace('\n', '<br>')|safe }}</div>
-        <p><strong class="text-white/70">Amount:</strong> <span class="text-xl font-bold text-teal-300">₹{{ "%.2f"|format(bill.amount) }}</span></p>
-        <!-- Created by line removed as requested -->
-    </div>
-    <div class="mt-6 flex flex-wrap gap-3">
-        <button onclick="window.print()" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition shadow-md">
-            <i class="fas fa-print"></i> Print Bill
-        </button>
-        {% if current_user.role == 'admin' %}
-            <a href="{{ url_for('admin.edit_bill', bill_id=bill.id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition shadow-md">
-                <i class="fas fa-edit"></i> Edit Bill
-            </a>
-        {% else %}
-            <a href="{{ url_for('receptionist.edit_bill', bill_id=bill.id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition shadow-md">
-                <i class="fas fa-edit"></i> Edit Bill
-            </a>
+        <div class="grid grid-cols-2 gap-4 text-white/80">
+            <div><strong class="text-white/60">Patient:</strong> {{ bill.patient.full_name }}</div>
+            <div><strong class="text-white/60">Amount:</strong> <span class="text-teal-300 font-bold">₹{{ "%.2f"|format(bill.amount) }}</span></div>
+            <div><strong class="text-white/60">Status:</strong>
+                <span class="px-3 py-1 rounded-full text-xs font-medium 
+                    {% if bill.status == 'Paid' %}bg-green-500/20 text-green-300
+                    {% elif bill.status == 'Pending' %}bg-yellow-500/20 text-yellow-300
+                    {% else %}bg-red-500/20 text-red-300{% endif %}">
+                    {{ bill.status }}
+                </span>
+            </div>
+            <div><strong class="text-white/60">Created:</strong> {{ bill.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div><strong class="text-white/60">Paid on:</strong> {{ bill.paid_at.strftime('%Y-%m-%d %H:%M') if bill.paid_at else '—' }}</div>
+            <div><strong class="text-white/60">Appointment:</strong>
+                {% if bill.appointment %}
+                    Dr. {{ bill.appointment.doctor.full_name }} on {{ bill.appointment.date.strftime('%d/%m/%Y') }} at {{ bill.appointment.start_time.strftime('%I:%M %p') }}
+                {% else %}
+                    <span class="text-white/40">No appointment linked</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if bill.items %}
+        <div class="mt-6 border-t border-white/10 pt-4">
+            <h3 class="text-white/80 font-semibold mb-2">Description / Items</h3>
+            <p class="text-white/70">{{ bill.items }}</p>
+        </div>
         {% endif %}
-        <a href="
-            {% if current_user.role == 'admin' %}
-                {{ url_for('admin.manage_bills') }}
-            {% else %}
-                {{ url_for('receptionist.manage_bills') }}
+
+        <div class="mt-8 flex gap-4">
+            {% if bill.status != 'Paid' %}
+            <a href="{{ url_for('receptionist.edit_bill', bill_id=bill.id) if current_user.role == 'receptionist' else url_for('admin.edit_bill', bill_id=bill.id) }}" class="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 px-4 py-2 rounded-lg transition">
+                <i class="fas fa-edit mr-2"></i> Edit
+            </a>
             {% endif %}
-        " class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition border border-white/10">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
+            <a href="#" onclick="window.print()" class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 px-4 py-2 rounded-lg transition">
+                <i class="fas fa-print mr-2"></i> Print
+            </a>
+        </div>
     </div>
 </div>
-
 {% endblock %}
