@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-md">
+    <div class="glass p-8 rounded-2xl">
+        <h1 class="text-3xl font-bold text-white text-glow mb-4">Verify Appointment</h1>
+        <p class="text-white/50 text-sm mb-6">Enter the appointment ID to mark it as completed.</p>
+
+        <form method="POST" action="{{ url_for('receptionist.verify_appointment') }}" class="space-y-4">
+            <div>
+                <label for="reference" class="block text-white/80 text-sm font-medium mb-1">Appointment ID</label>
+                <input type="text" name="reference" id="reference" required
+                       placeholder="e.g. APT-3F8E2C"
+                       class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 transition uppercase">
+            </div>
+            <button type="submit"
+                    class="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-300 hover:to-cyan-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> Verify & Complete
+            </button>
+        </form>
+
+        <!-- ======== APPOINTMENT DETAILS (shown after verification) ======== -->
+        {% if appointment %}
+        <div class="mt-8 p-4 bg-white/5 border border-teal-400/20 rounded-lg">
+            <h3 class="text-lg font-bold text-white mb-3">✅ Appointment Verified</h3>
+            <div class="space-y-2 text-white/80 text-sm">
+                <p><strong class="text-white/60">ID:</strong> <span class="font-mono">{{ appointment.reference }}</span></p>
+                <p><strong class="text-white/60">Patient:</strong> {{ appointment.patient.full_name }}</p>
+                <p><strong class="text-white/60">Doctor:</strong> Dr. {{ appointment.doctor.full_name }}</p>
+                <p><strong class="text-white/60">Specialty:</strong> {{ appointment.doctor.specialization or 'General' }}</p>
+                <p><strong class="text-white/60">Date:</strong> {{ appointment.date.strftime('%A, %B %d, %Y') }}</p>
+                <p><strong class="text-white/60">Time:</strong> {{ appointment.start_time.strftime('%I:%M %p') }} - {{ appointment.end_time.strftime('%I:%M %p') }}</p>
+                <p><strong class="text-white/60">Status:</strong> 
+                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">
+                        {{ appointment.status }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-6 text-center">
+            <a href="{{ url_for('receptionist.dashboard') }}" class="text-teal-400 hover:text-teal-300 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -94,7 +94,7 @@ class Receptionist(db.Model):
         return f'<Receptionist {self.full_name}>'
 
 
-# ========== Appointment ==========
+# ========== Appointment (UPDATED) ==========
 class Appointment(db.Model):
     __tablename__ = 'appointments'
 
@@ -104,15 +104,26 @@ class Appointment(db.Model):
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    status = db.Column(db.String(20), default='scheduled')  # scheduled, completed, cancelled, pending
+    status = db.Column(db.String(20), default='pending')  # pending, scheduled, completed, cancelled
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # NEW: alphanumeric reference
+    reference = db.Column(db.String(20), unique=True, nullable=False, index=True)
 
     prescriptions = db.relationship('Prescription', backref='appointment', lazy=True)
     bill = db.relationship('Bill', backref='appointment', uselist=False)
 
+    @staticmethod
+    def generate_reference():
+        """Generate a unique alphanumeric appointment ID (e.g., APT-3F8E2C)."""
+        import secrets
+        while True:
+            ref = 'APT-' + secrets.token_hex(3).upper()
+            if not Appointment.query.filter_by(reference=ref).first():
+                return ref
+
     def __repr__(self):
-        return f'<Appointment {self.id} - {self.date}>'
+        return f'<Appointment {self.reference} - {self.date}>'
 
 
 # ========== Prescription ==========
@@ -148,10 +159,6 @@ class Availability(db.Model):
 
     @classmethod
     def get_available_slots(cls, doctor_id, date):
-        """
-        Return list of available time slots for a doctor on a given date.
-        Each slot is a dict with 'start', 'end' (both time objects).
-        """
         from datetime import datetime, timedelta
         day_of_week = date.weekday()
         availabilities = cls.query.filter_by(

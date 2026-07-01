@@ -142,6 +142,9 @@ def book_appointment():
         slot_duration = int(GlobalSetting.get('slot_duration_minutes', 30))
         end_time = (datetime.combine(date, start_time) + timedelta(minutes=slot_duration)).time()
 
+        # Generate unique reference
+        reference = Appointment.generate_reference()
+
         appointment = Appointment(
             patient_id=patient.id,
             doctor_id=doctor_id,
@@ -149,7 +152,8 @@ def book_appointment():
             start_time=start_time,
             end_time=end_time,
             status='pending',
-            notes=notes
+            notes=notes,
+            reference=reference
         )
         db.session.add(appointment)
         db.session.commit()
@@ -170,10 +174,10 @@ def book_appointment():
                 main_content=f"""
                 <p>Your appointment request has been received and is <strong>waiting for approval</strong> from Dr. {doctor_name}.</p>
                 <div style="background: #0f172a; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                    <p><strong>🆔 Appointment ID:</strong> {reference}</p>
                     <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
                     <p><strong>📅 Date:</strong> {appointment_date}</p>
                     <p><strong>⏰ Time:</strong> {appointment_time}</p>
-                    <p><strong>🆔 Appointment ID:</strong> #{appointment.id}</p>
                 </div>
                 <p>You will receive a confirmation email once the doctor approves your request.</p>
                 <p>Thank you for choosing SKD Hospital.</p>
@@ -184,7 +188,7 @@ def book_appointment():
         except Exception as e:
             print(f"❌ Failed to send waiting email: {e}")
 
-        # --- Notify doctor (optional) ---
+        # --- Notify doctor ---
         try:
             doctor = Doctor.query.get(doctor_id)
             if doctor and doctor.user.email:
@@ -195,6 +199,7 @@ def book_appointment():
                     main_content=f"""
                     <p>A new appointment has been requested by <strong>{patient.full_name}</strong>.</p>
                     <div style="background: #0f172a; border-left: 5px solid #00ccb0; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                        <p><strong>🆔 Appointment ID:</strong> {reference}</p>
                         <p><strong>📅 Date:</strong> {appointment_date}</p>
                         <p><strong>⏰ Time:</strong> {appointment_time}</p>
                         <p><strong>📝 Notes:</strong> {appointment.notes or 'None'}</p>
@@ -218,7 +223,6 @@ def book_appointment():
         slot_duration=slot_duration,
         now=datetime.now()
     )
-
 
 @patient_bp.route('/appointment/<int:appointment_id>/cancel', methods=['POST'])
 @login_required

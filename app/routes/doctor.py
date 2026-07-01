@@ -20,7 +20,7 @@ def doctor_required(f):
 
 
 # ============================
-# DASHBOARD (RICH VERSION)
+# DASHBOARD
 # ============================
 @doctor_bp.route('/dashboard')
 @login_required
@@ -159,10 +159,10 @@ def accept_appointment(appointment_id):
             main_content=f"""
             <p>Great news! Your appointment has been <strong>confirmed</strong> by Dr. {doctor_name}.</p>
             <div style="background: #0f172a; border-left: 5px solid #00ccb0; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                <p><strong>🆔 Appointment ID:</strong> {appointment.reference}</p>
                 <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
                 <p><strong>📅 Date:</strong> {appointment_date}</p>
                 <p><strong>⏰ Time:</strong> {appointment_time}</p>
-                <p><strong>🆔 Appointment ID:</strong> #{appointment.id}</p>
             </div>
             <p>Please arrive 10 minutes before your scheduled time.</p>
             <p>Thank you for choosing SKD Hospital.</p>
@@ -213,6 +213,7 @@ def reject_appointment(appointment_id):
             main_content=f"""
             <p>We regret to inform you that your appointment request has been <strong>rejected</strong> by Dr. {doctor_name}.</p>
             <div style="background: #0f172a; border-left: 5px solid #ef4444; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                <p><strong>🆔 Appointment ID:</strong> {appointment.reference}</p>
                 <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
                 <p><strong>📅 Date:</strong> {appointment_date}</p>
                 <p><strong>⏰ Time:</strong> {appointment_time}</p>
@@ -334,6 +335,21 @@ def respond_appointment(appointment_id):
         flash('Invalid action.', 'danger')
 
     return redirect(url_for('doctor.dashboard'))
+
+
+# ============================
+# VIEW APPOINTMENT DETAILS
+# ============================
+@doctor_bp.route('/appointment/<int:appointment_id>/view')
+@login_required
+@doctor_required
+def view_appointment(appointment_id):
+    appointment = Appointment.query.get_or_404(appointment_id)
+    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    if appointment.doctor_id != doctor.id:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('doctor.dashboard'))
+    return render_template('doctor_view_appointment.html', appointment=appointment)
 
 
 # ============================
