@@ -42,7 +42,7 @@
                     <option value="">-- None --</option>
                     {% for apt in appointments %}
                         <option value="{{ apt.id }}" {% if bill and apt.id == bill.appointment_id %}selected{% endif %}>
-                            Dr. {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}
+                             {{ apt.doctor.full_name }} on {{ apt.date.strftime('%d/%m/%Y') }} at {{ apt.start_time.strftime('%I:%M %p') }}
                         </option>
                     {% endfor %}
                 </select>

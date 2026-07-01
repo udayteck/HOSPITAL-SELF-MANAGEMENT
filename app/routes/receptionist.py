@@ -218,7 +218,6 @@ def generate_bill():
 
         bill_number = f"BILL-{datetime.utcnow().strftime('%Y%m%d')}-{Bill.query.count() + 1}"
         bill = Bill(
-            bill_number=bill_number,
             patient_id=patient_id,
             appointment_id=appointment_id if appointment_id else None,
             amount=amount,
