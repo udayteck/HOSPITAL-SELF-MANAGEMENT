@@ -21,6 +21,9 @@ def patient_required(f):
     return decorated
 
 
+# ============================
+# PATIENT DASHBOARD
+# ============================
 @patient_bp.route('/dashboard')
 @login_required
 @patient_required
@@ -151,7 +154,37 @@ def book_appointment():
         db.session.add(appointment)
         db.session.commit()
 
-        # Notify doctor (optional)
+        # --- Send "Waiting for Approval" email to patient ---
+        try:
+            doctor = Doctor.query.get(doctor_id)
+            patient_email = patient.user.email
+            patient_name = patient.full_name
+            doctor_name = doctor.full_name
+            appointment_date = date.strftime('%A, %B %d, %Y')
+            appointment_time = start_time.strftime('%I:%M %p')
+
+            subject = "⏳ Appointment Request Received - SKD Hospital"
+            html_content = build_skd_email_template(
+                title="Appointment Request Received",
+                greeting_text=f"Dear {patient_name},",
+                main_content=f"""
+                <p>Your appointment request has been received and is <strong>waiting for approval</strong> from Dr. {doctor_name}.</p>
+                <div style="background: #0f172a; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                    <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
+                    <p><strong>📅 Date:</strong> {appointment_date}</p>
+                    <p><strong>⏰ Time:</strong> {appointment_time}</p>
+                    <p><strong>🆔 Appointment ID:</strong> #{appointment.id}</p>
+                </div>
+                <p>You will receive a confirmation email once the doctor approves your request.</p>
+                <p>Thank you for choosing SKD Hospital.</p>
+                """
+            )
+            send_html_email(patient_email, subject, html_content)
+            print(f"✅ Waiting email sent to {patient_email}")
+        except Exception as e:
+            print(f"❌ Failed to send waiting email: {e}")
+
+        # --- Notify doctor (optional) ---
         try:
             doctor = Doctor.query.get(doctor_id)
             if doctor and doctor.user.email:
@@ -161,17 +194,17 @@ def book_appointment():
                     greeting_text=f"Dear Dr. {doctor.full_name},",
                     main_content=f"""
                     <p>A new appointment has been requested by <strong>{patient.full_name}</strong>.</p>
-                    <div style="background: #f0fdfa; border-left: 5px solid #14b8a6; border-radius: 12px; padding: 16px; margin: 24px 0;">
-                        <p><strong>📅 Date:</strong> {date.strftime('%A, %B %d, %Y')}</p>
-                        <p><strong>⏰ Time:</strong> {start_time.strftime('%I:%M %p')}</p>
+                    <div style="background: #0f172a; border-left: 5px solid #00ccb0; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                        <p><strong>📅 Date:</strong> {appointment_date}</p>
+                        <p><strong>⏰ Time:</strong> {appointment_time}</p>
                         <p><strong>📝 Notes:</strong> {appointment.notes or 'None'}</p>
                     </div>
-                    <p>Please login to confirm or reject this request.</p>
+                    <p>Please login to <strong>accept</strong> or <strong>reject</strong> this request.</p>
                     """
                 )
                 send_html_email(doctor.user.email, subject, html)
         except Exception as e:
-            print(f"⚠️ Failed to send notification to doctor: {e}")
+            print(f"⚠️ Failed to notify doctor: {e}")
 
         flash('Appointment request sent! Please wait for doctor confirmation.', 'success')
         return redirect(url_for('patient.dashboard'))

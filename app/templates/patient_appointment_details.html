@@ -2,13 +2,11 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8 max-w-3xl">
-    <div class="flex items-center gap-4 mb-6">
-        <a href="{{ url_for('patient.dashboard') }}" class="text-teal-400 hover:text-teal-300">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
-    </div>
+    <a href="{{ url_for('patient.dashboard') }}" class="text-teal-400 hover:text-teal-300">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
 
-    <div class="glass p-8 rounded-2xl">
+    <div class="glass p-8 rounded-2xl mt-4">
         <div class="flex justify-between items-start mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-white text-glow">Appointment Details</h1>
@@ -24,34 +22,27 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="space-y-3">
-                <div>
-                    <p class="text-white/50 text-sm">Doctor</p>
-                    <p class="text-white font-medium">Dr. {{ appointment.doctor.full_name }}</p>
-                </div>
-                <div>
-                    <p class="text-white/50 text-sm">Specialty</p>
-                    <p class="text-white">{{ appointment.doctor.specialization or 'N/A' }}</p>
-                </div>
+            <div>
+                <p class="text-white/50 text-sm">Doctor</p>
+                <p class="text-white font-medium">Dr. {{ appointment.doctor.full_name }}</p>
             </div>
-            <div class="space-y-3">
-                <div>
-                    <p class="text-white/50 text-sm">Date</p>
-                    <p class="text-white font-medium">{{ appointment.date.strftime('%A, %B %d, %Y') }}</p>
-                </div>
-                <div>
-                    <p class="text-white/50 text-sm">Time</p>
-                    <p class="text-white">{{ appointment.start_time.strftime('%I:%M %p') }} - {{ appointment.end_time.strftime('%I:%M %p') }}</p>
-                </div>
+            <div>
+                <p class="text-white/50 text-sm">Specialty</p>
+                <p class="text-white">{{ appointment.doctor.specialization or 'N/A' }}</p>
+            </div>
+            <div>
+                <p class="text-white/50 text-sm">Date</p>
+                <p class="text-white font-medium">{{ appointment.date.strftime('%A, %B %d, %Y') }}</p>
+            </div>
+            <div>
+                <p class="text-white/50 text-sm">Time</p>
+                <p class="text-white">{{ appointment.start_time.strftime('%I:%M %p') }} - {{ appointment.end_time.strftime('%I:%M %p') }}</p>
+            </div>
+            <div class="md:col-span-2">
+                <p class="text-white/50 text-sm">Notes</p>
+                <p class="text-white/80">{{ appointment.notes or 'No notes' }}</p>
             </div>
         </div>
-
-        {% if appointment.notes %}
-        <div class="border-t border-white/10 pt-4 mt-4">
-            <p class="text-white/50 text-sm">Notes</p>
-            <p class="text-white/80">{{ appointment.notes }}</p>
-        </div>
-        {% endif %}
 
         <div class="flex flex-wrap gap-4 mt-8 pt-6 border-t border-white/10">
             {% if appointment.status in ['scheduled', 'pending'] %}

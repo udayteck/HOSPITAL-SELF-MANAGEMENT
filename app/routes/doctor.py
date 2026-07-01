@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, flash, redirect, url_for, request,
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.models import Appointment, Patient, Doctor, Prescription, User, GlobalSetting
+from app.email_helper import send_html_email, build_skd_email_template
 from datetime import datetime, timedelta
 from sqlalchemy import func
-from app.email_helper import send_html_email, build_skd_email_template
 
 doctor_bp = Blueprint('doctor', __name__)
 
@@ -20,7 +20,7 @@ def doctor_required(f):
 
 
 # ============================
-# DASHBOARD
+# DASHBOARD (RICH VERSION)
 # ============================
 @doctor_bp.route('/dashboard')
 @login_required
@@ -35,21 +35,20 @@ def dashboard():
     today_start = datetime.combine(today, datetime.min.time())
     today_end = datetime.combine(today, datetime.max.time())
 
-    # --- Appointments ---
-    # Pending requests (status = 'pending')
+    # --- Pending Requests ---
     pending_requests = Appointment.query.filter(
         Appointment.doctor_id == doctor.id,
         Appointment.status == 'pending'
     ).order_by(Appointment.date, Appointment.start_time).all()
 
-    # Today's appointments (status = 'scheduled')
+    # --- Today's Appointments ---
     today_appointments = Appointment.query.filter(
         Appointment.doctor_id == doctor.id,
         Appointment.date == today,
         Appointment.status == 'scheduled'
     ).order_by(Appointment.start_time).all()
 
-    # Upcoming appointments (next 7 days)
+    # --- Upcoming Appointments (next 7 days) ---
     next_week = today + timedelta(days=7)
     upcoming_appointments = Appointment.query.filter(
         Appointment.doctor_id == doctor.id,
@@ -65,7 +64,7 @@ def dashboard():
 
     total_appointments = Appointment.query.filter_by(doctor_id=doctor.id).count()
     completed_appointments = Appointment.query.filter_by(doctor_id=doctor.id, status='completed').count()
-    pending_appointments = Appointment.query.filter_by(doctor_id=doctor.id, status='scheduled').count()
+    pending_count = Appointment.query.filter_by(doctor_id=doctor.id, status='pending').count()
 
     # Seen patients (completed or no-show)
     seen_patients = db.session.query(func.count(func.distinct(Appointment.patient_id))).filter(
@@ -78,7 +77,7 @@ def dashboard():
         Appointment.doctor_id == doctor.id
     ).order_by(Appointment.created_at.desc()).limit(10).all()
 
-    # Patient records with last visit date (for the doctor's dashboard)
+    # Patient records with last visit date
     patient_records = db.session.query(
         Patient, func.max(Appointment.date).label('last_visit')
     ).join(Appointment, Appointment.patient_id == Patient.id).filter(
@@ -114,7 +113,7 @@ def dashboard():
         total_patients=total_patients,
         total_appointments=total_appointments,
         completed_appointments=completed_appointments,
-        pending_appointments=pending_appointments,
+        pending_count=pending_count,
         seen_patients=seen_patients,
         recent_patients=recent_patients,
         patient_records=patient_records,
@@ -125,7 +124,114 @@ def dashboard():
 
 
 # ============================
-# APPOINTMENT MANAGEMENT
+# ACCEPT APPOINTMENT
+# ============================
+@doctor_bp.route('/appointment/<int:appointment_id>/accept', methods=['POST'])
+@login_required
+@doctor_required
+def accept_appointment(appointment_id):
+    appointment = Appointment.query.get_or_404(appointment_id)
+    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    
+    if appointment.doctor_id != doctor.id:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('doctor.dashboard'))
+
+    if appointment.status != 'pending':
+        flash('This appointment has already been processed.', 'warning')
+        return redirect(url_for('doctor.dashboard'))
+
+    appointment.status = 'scheduled'
+    db.session.commit()
+
+    # Send confirmation email to patient
+    try:
+        patient_email = appointment.patient.user.email
+        patient_name = appointment.patient.full_name
+        doctor_name = doctor.full_name
+        appointment_date = appointment.date.strftime('%A, %B %d, %Y')
+        appointment_time = appointment.start_time.strftime('%I:%M %p')
+
+        subject = "✅ Appointment Confirmed - SKD Hospital"
+        html_content = build_skd_email_template(
+            title="Appointment Confirmed",
+            greeting_text=f"Dear {patient_name},",
+            main_content=f"""
+            <p>Great news! Your appointment has been <strong>confirmed</strong> by Dr. {doctor_name}.</p>
+            <div style="background: #0f172a; border-left: 5px solid #00ccb0; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
+                <p><strong>📅 Date:</strong> {appointment_date}</p>
+                <p><strong>⏰ Time:</strong> {appointment_time}</p>
+                <p><strong>🆔 Appointment ID:</strong> #{appointment.id}</p>
+            </div>
+            <p>Please arrive 10 minutes before your scheduled time.</p>
+            <p>Thank you for choosing SKD Hospital.</p>
+            """
+        )
+        send_html_email(patient_email, subject, html_content)
+        print(f"✅ Confirmation email sent to {patient_email}")
+    except Exception as e:
+        print(f"❌ Failed to send confirmation email: {e}")
+
+    flash('Appointment confirmed. Patient has been notified.', 'success')
+    return redirect(url_for('doctor.dashboard'))
+
+
+# ============================
+# REJECT APPOINTMENT
+# ============================
+@doctor_bp.route('/appointment/<int:appointment_id>/reject', methods=['POST'])
+@login_required
+@doctor_required
+def reject_appointment(appointment_id):
+    appointment = Appointment.query.get_or_404(appointment_id)
+    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    
+    if appointment.doctor_id != doctor.id:
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('doctor.dashboard'))
+
+    if appointment.status != 'pending':
+        flash('This appointment has already been processed.', 'warning')
+        return redirect(url_for('doctor.dashboard'))
+
+    appointment.status = 'cancelled'
+    db.session.commit()
+
+    # Send rejection email to patient
+    try:
+        patient_email = appointment.patient.user.email
+        patient_name = appointment.patient.full_name
+        doctor_name = doctor.full_name
+        appointment_date = appointment.date.strftime('%A, %B %d, %Y')
+        appointment_time = appointment.start_time.strftime('%I:%M %p')
+
+        subject = "❌ Appointment Rejected - SKD Hospital"
+        html_content = build_skd_email_template(
+            title="Appointment Rejected",
+            greeting_text=f"Dear {patient_name},",
+            main_content=f"""
+            <p>We regret to inform you that your appointment request has been <strong>rejected</strong> by Dr. {doctor_name}.</p>
+            <div style="background: #0f172a; border-left: 5px solid #ef4444; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                <p><strong>👨‍⚕️ Doctor:</strong> Dr. {doctor_name}</p>
+                <p><strong>📅 Date:</strong> {appointment_date}</p>
+                <p><strong>⏰ Time:</strong> {appointment_time}</p>
+            </div>
+            <p>Please book another slot or contact us for assistance.</p>
+            <p>Thank you for choosing SKD Hospital.</p>
+            """
+        )
+        send_html_email(patient_email, subject, html_content)
+        print(f"✅ Rejection email sent to {patient_email}")
+    except Exception as e:
+        print(f"❌ Failed to send rejection email: {e}")
+
+    flash('Appointment rejected. Patient has been notified.', 'danger')
+    return redirect(url_for('doctor.dashboard'))
+
+
+# ============================
+# LEGACY APPOINTMENT ROUTES (Keep for compatibility)
 # ============================
 @doctor_bp.route('/appointment/<int:appointment_id>/update', methods=['POST'])
 @login_required
@@ -163,7 +269,6 @@ def respond_appointment(appointment_id):
         db.session.commit()
         flash('Appointment confirmed.', 'success')
 
-        # Send confirmation email
         try:
             patient_email = appointment.patient.user.email
             patient_name = appointment.patient.full_name
@@ -198,7 +303,6 @@ def respond_appointment(appointment_id):
         db.session.commit()
         flash('Appointment rejected.', 'danger')
 
-        # Send rejection email
         try:
             patient_email = appointment.patient.user.email
             patient_name = appointment.patient.full_name
@@ -254,14 +358,12 @@ def patient_record(patient_id):
 
 
 # ============================
-# ADD AVAILABILITY (Optional)
+# ADD AVAILABILITY (Placeholder)
 # ============================
 @doctor_bp.route('/add_availability', methods=['GET', 'POST'])
 @login_required
 @doctor_required
 def add_availability():
-    # This is a placeholder – you can implement if you use a separate Availability model.
-    # For now, we just redirect to dashboard.
     flash('Availability management is not implemented yet.', 'info')
     return redirect(url_for('doctor.dashboard'))
 
@@ -292,7 +394,6 @@ def patients():
     if not doctor:
         flash('Doctor profile not found.', 'danger')
         return redirect(url_for('main.index'))
-    # Get distinct patients who have appointments with this doctor
     all_patients = db.session.query(Patient).join(Appointment).filter(
         Appointment.doctor_id == doctor.id
     ).distinct().all()

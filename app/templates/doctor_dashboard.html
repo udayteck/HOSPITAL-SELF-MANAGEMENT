@@ -92,14 +92,61 @@
                     <i class="fas fa-clock"></i>
                 </div>
                 <div>
-                    <p class="text-white/60 text-sm">Pending</p>
-                    <p class="text-2xl font-bold text-white">{{ pending_appointments }}</p>
+                    <p class="text-white/60 text-sm">Pending Requests</p>
+                    <p class="text-2xl font-bold text-white">{{ pending_count }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Reports Section -->
+    <!-- ======== PENDING REQUESTS SECTION ======== -->
+    {% if pending_requests %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-white text-glow mb-4">
+            <i class="fas fa-clock text-yellow-400 mr-2"></i> Pending Requests
+            <span class="text-sm text-yellow-400/60 font-normal ml-2">{{ pending_requests|length }} waiting</span>
+        </h2>
+        <div class="glass rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-white">
+                    <thead>
+                        <tr class="border-b border-white/10 bg-white/5">
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Patient</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Date</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Time</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Notes</th>
+                            <th class="text-left py-4 px-6 text-sm font-semibold text-white/60">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for apt in pending_requests %}
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6">{{ apt.patient.full_name }}</td>
+                            <td class="py-4 px-6">{{ apt.date.strftime('%d/%m/%Y') }}</td>
+                            <td class="py-4 px-6">{{ apt.start_time.strftime('%I:%M %p') }}</td>
+                            <td class="py-4 px-6 text-white/60 text-sm">{{ apt.notes or '—' }}</td>
+                            <td class="py-4 px-6">
+                                <form method="POST" action="{{ url_for('doctor.accept_appointment', appointment_id=apt.id) }}" class="inline">
+                                    <button type="submit" class="px-4 py-2 bg-green-500/20 hover:bg-green-500/40 text-green-300 rounded-lg transition text-sm font-medium">
+                                        <i class="fas fa-check mr-1"></i> Accept
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('doctor.reject_appointment', appointment_id=apt.id) }}" class="inline ml-2">
+                                    <button type="submit" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg transition text-sm font-medium" onclick="return confirm('Reject this appointment?')">
+                                        <i class="fas fa-times mr-1"></i> Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reports & Analytics -->
     <div class="mb-8">
         <h2 class="text-2xl font-bold text-white text-glow mb-4">Reports & Analytics</h2>
         <div class="glass p-6 rounded-2xl">
@@ -133,8 +180,8 @@
                             <span class="text-white font-bold">{{ completed_appointments }}</span>
                         </div>
                         <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                            <span class="text-yellow-400">Pending</span>
-                            <span class="text-white font-bold">{{ pending_appointments }}</span>
+                            <span class="text-yellow-400">Pending Requests</span>
+                            <span class="text-white font-bold">{{ pending_count }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-white/70">Unique Patients</span>
